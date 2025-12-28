@@ -1,0 +1,222 @@
+# Home Assistant Sungrow iHomeManager integration
+
+modbus:
+  - name: Sungrow_iHM
+    type: tcp
+    host: !secret ihm_modbus_host_ip 
+    port: !secret ihm_modbus_port
+    delay: 5
+    timeout: 10
+    sensors:
+
+      # Input registers (address type: 3X)
+
+      - name: "iHM meter power signed"
+        unique_id: ihm_meter_power_signed
+        address: 8156 # reg 8157
+        slave: !secret ihm_modbus_slave
+        input_type: input
+        data_type: int32
+        swap: word
+        scan_interval: 5
+        precision: 0
+        scale: 10
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+
+      - name: "iHM load power"
+        unique_id: ihm_load_power
+        address: 8158 # reg 8159
+        slave: !secret ihm_modbus_slave
+        input_type: input
+        data_type: int32
+        swap: word
+        scan_interval: 10
+        precision: 0
+        scale: 10
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+
+      - name: "iHM grid import energy"
+        unique_id: ihm_grid_import_energy
+        address: 8175 # reg 8176
+        slave: !secret ihm_modbus_slave
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: 600
+
+      - name: "iHM grid export energy"
+        unique_id: ihm_grid_export_energy
+        address: 8177 # reg 8178
+        slave: !secret ihm_modbus_slave
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+        scale: 0.1
+        scan_interval: 600
+
+      - name: "iHM charger status"
+        unique_id: ihm_charger_status
+        address: 8551 # reg 8552
+        slave: !secret ihm_modbus_slave
+        input_type: input
+        data_type: uint16
+        scan_interval: 30
+
+      # Hold registers (address type: 4X)
+
+      - name: "iHM charger mode"
+        unique_id: ihm_charger_mode
+        address: 8047 # reg 8048
+        slave: !secret ihm_modbus_slave
+        input_type: holding
+        data_type: uint16
+        scan_interval: 30
+
+      - name: "iHM charger enabled"
+        unique_id: ihm_charger_enabled
+        address: 8048 # reg 8049
+        slave: !secret ihm_modbus_slave
+        input_type: holding
+        data_type: uint16
+        scan_interval: 30
+
+      - name: "iHM charger grid enabled"
+        unique_id: ihm_charger_grid_enabled
+        address: 8049 # reg 8050
+        slave: !secret ihm_modbus_slave
+        input_type: holding
+        data_type: uint16
+        scan_interval: 30
+
+      - name: "iHM charger power limitation"
+        unique_id: ihm_charger_power_limitation
+        address: 8050 # reg 8051
+        slave: !secret ihm_modbus_slave
+        input_type: holding
+        data_type: uint16
+        scan_interval: 30
+
+
+        # not working need to test with modbus cli. returning not supported 65535
+      - name: "iHM charger power limit"
+        unique_id: ihm_charger_power_limit
+        address: 8051 # reg 8052
+        slave: !secret ihm_modbus_slave
+        input_type: holding
+        data_type: uint16
+        scale: 0.1
+        precision: 1
+        unit_of_measurement: "%"
+        scan_interval: 30
+
+template:
+  - sensor:
+      - name: "iHM import power"
+        unique_id: ihm_import_power
+        device_class: power
+        state_class: measurement
+        unit_of_measurement: "W"
+        availability: >-
+          {{ states('sensor.ihm_meter_power_signed') not in ['unknown','unavailable',''] }}
+        state: >-
+          {% set v = states('sensor.ihm_meter_power_signed')|float(0) %}
+          {{ (v if v > 0 else 0) | round(0) | int }}
+
+      - name: "iHM export power"
+        unique_id: ihm_export_power
+        device_class: power
+        state_class: measurement
+        unit_of_measurement: "W"
+        availability: >-
+          {{ states('sensor.ihm_meter_power_signed') not in ['unknown','unavailable',''] }}
+        state: >-
+          {% set v = states('sensor.ihm_meter_power_signed')|float(0) %}
+          {{ ((-v) if v < 0 else 0) | round(0) | int }}
+
+        # status 4 was seen shortly after connecting charger. may need to check iSolarCloud logs to determine what it is.
+        # add icon for status 4 once determined
+      - name: "EV Charger Status"
+        unique_id: ihm_charger_status_friendly
+        state: >
+          {% set status = states('sensor.ihm_charger_status') | int(0) %}
+          {% if status == 1 %}
+            Idle (unplugged)
+          {% elif status == 2 %}
+            Standby (plugged)
+          {% elif status == 3 %}
+            Charging
+          {% elif status == 4 %}
+            Unknown
+          {% elif status == 5 %}
+            Charging suspended
+          {% elif status == 6 %}
+            Charging completed
+          {% else %}
+            Unknown
+          {% endif %}
+        icon: >
+          {% set status = states('sensor.ihm_charger_status') | int(0) %}
+          {% if status == 1 %}
+            mdi:ev-plug-type2
+          {% elif status == 2 %}
+            mdi:battery-charging-outline
+          {% elif status == 3 %}
+            mdi:battery-charging
+          {% elif status == 5 %}
+            mdi:battery-charging-outline
+          {% elif status == 6 %}
+            mdi:battery-check
+          {% else %}
+            mdi:help-circle
+          {% endif %}
+
+      - name: "EV Charger Mode"
+        unique_id: ihm_charger_mode_friendly
+        state: >
+          {% set mode = states('sensor.ihm_charger_mode') | int(0) %}
+          {% if mode == 164 %}
+            Fast charging
+          {% elif mode == 165 %}
+            Eco & fast charging
+          {% elif mode == 166 %}
+            Eco & economic charging
+          {% else %}
+            Unknown ({{ mode }})
+          {% endif %}
+        icon: >
+          {% set mode = states('sensor.ihm_charger_mode') | int(0) %}
+          {% if mode == 164 %}
+            mdi:lightning-bolt
+          {% elif mode == 165 %}
+            mdi:lightning-bolt
+          {% elif mode == 166 %}
+            mdi:leaf
+          {% else %}
+            mdi:help-circle
+          {% endif %}
+
+  - binary_sensor:
+      - name: "iHM Charger Grid Enabled"
+        unique_id: ihm_charger_grid_enabled_friendly
+        state: >
+          {{ states('sensor.ihm_charger_grid_enabled') | int(0) == 170 }}
+        device_class: power
+        icon: >
+          {% if states('sensor.ihm_charger_grid_enabled') | int(0) == 170 %}
+            mdi:transmission-tower-export
+          {% else %}
+            mdi:transmission-tower-off
+          {% endif %}
