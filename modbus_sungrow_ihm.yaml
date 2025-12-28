@@ -1,10 +1,10 @@
 # Home Assistant Sungrow iHomeManager integration
 
 modbus:
-  - name: Sungrow_iHM
+  - name: &sg_hub_name Sungrow_iHM
     type: tcp
-    host: !secret ihm_modbus_host_ip 
-    port: !secret ihm_modbus_port
+    host: &sg_host 10.40.0.31 # TODO update with the IP of your iHM. No default. Check your router.
+    port: &sg_port 503 # TODO update with the Modbus port of your iHM. Default is '502' but found 502 unresponsive.
     delay: 5
     timeout: 10
     sensors:
@@ -14,7 +14,7 @@ modbus:
       - name: "iHM meter power signed"
         unique_id: ihm_meter_power_signed
         address: 8156 # reg 8157
-        slave: !secret ihm_modbus_slave
+        slave: &sg_device_address 247 # TODO update with the slave address. Default 247
         input_type: input
         data_type: int32
         swap: word
@@ -28,7 +28,7 @@ modbus:
       - name: "iHM load power"
         unique_id: ihm_load_power
         address: 8158 # reg 8159
-        slave: !secret ihm_modbus_slave
+        slave: *sg_device_address
         input_type: input
         data_type: int32
         swap: word
@@ -42,7 +42,7 @@ modbus:
       - name: "iHM grid import energy"
         unique_id: ihm_grid_import_energy
         address: 8175 # reg 8176
-        slave: !secret ihm_modbus_slave
+        slave: *sg_device_address
         input_type: input
         data_type: uint32
         swap: word
@@ -56,7 +56,7 @@ modbus:
       - name: "iHM grid export energy"
         unique_id: ihm_grid_export_energy
         address: 8177 # reg 8178
-        slave: !secret ihm_modbus_slave
+        slave: *sg_device_address
         input_type: input
         data_type: uint32
         swap: word
@@ -70,7 +70,7 @@ modbus:
       - name: "iHM charger status"
         unique_id: ihm_charger_status
         address: 8551 # reg 8552
-        slave: !secret ihm_modbus_slave
+        slave: *sg_device_address
         input_type: input
         data_type: uint16
         scan_interval: 30
@@ -80,7 +80,7 @@ modbus:
       - name: "iHM charger mode"
         unique_id: ihm_charger_mode
         address: 8047 # reg 8048
-        slave: !secret ihm_modbus_slave
+        slave: *sg_device_address
         input_type: holding
         data_type: uint16
         scan_interval: 30
@@ -88,7 +88,7 @@ modbus:
       - name: "iHM charger enabled"
         unique_id: ihm_charger_enabled
         address: 8048 # reg 8049
-        slave: !secret ihm_modbus_slave
+        slave: *sg_device_address
         input_type: holding
         data_type: uint16
         scan_interval: 30
@@ -96,7 +96,7 @@ modbus:
       - name: "iHM charger grid enabled"
         unique_id: ihm_charger_grid_enabled
         address: 8049 # reg 8050
-        slave: !secret ihm_modbus_slave
+        slave: *sg_device_address
         input_type: holding
         data_type: uint16
         scan_interval: 30
@@ -104,23 +104,23 @@ modbus:
       - name: "iHM charger power limitation"
         unique_id: ihm_charger_power_limitation
         address: 8050 # reg 8051
-        slave: !secret ihm_modbus_slave
+        slave: *sg_device_address
         input_type: holding
         data_type: uint16
         scan_interval: 30
 
 
-        # not working need to test with modbus cli. returning not supported 65535
-      - name: "iHM charger power limit"
-        unique_id: ihm_charger_power_limit
-        address: 8051 # reg 8052
-        slave: !secret ihm_modbus_slave
-        input_type: holding
-        data_type: uint16
-        scale: 0.1
-        precision: 1
-        unit_of_measurement: "%"
-        scan_interval: 30
+      # not working. returns 32767 
+      # - name: "iHM charger power limit"
+      #  unique_id: ihm_charger_power_limit
+      #  address: 8051 # reg 8052
+      #  slave: *sg_device_address
+      #  input_type: holding
+      #  data_type: uint16
+      #  scale: 0.1
+      #  precision: 1
+      #  unit_of_measurement: "%"
+      #  scan_interval: 30
 
 template:
   - sensor:
