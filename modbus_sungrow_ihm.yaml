@@ -7,23 +7,38 @@ modbus:
     port: &sg_port 503 # TODO update with the Modbus port of your iHM. Default is '502' but found 502 unresponsive.
     delay: 5
     timeout: 10
+
     sensors:
 
       # Input registers (address type: 3X)
 
-      - name: "iHM meter power signed"
-        unique_id: ihm_meter_power_signed
-        address: 8156 # reg 8157
+      - name: "iHM total active power"
+        unique_id: ihm_total_active_power
+        address: 8154 # reg 8155
         slave: &sg_device_address 247 # TODO update with the slave address. Default 247
         input_type: input
         data_type: int32
         swap: word
-        scan_interval: 5
         precision: 0
         scale: 10
         unit_of_measurement: "W"
         device_class: power
         state_class: measurement
+        scan_interval: &scan_interval_fast 10
+
+      - name: "iHM meter power signed"
+        unique_id: ihm_meter_power_signed
+        address: 8156 # reg 8157
+        slave: *sg_device_address
+        input_type: input
+        data_type: int32
+        swap: word
+        precision: 0
+        scale: 10
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        scan_interval: *scan_interval_fast
 
       - name: "iHM load power"
         unique_id: ihm_load_power
@@ -32,12 +47,12 @@ modbus:
         input_type: input
         data_type: int32
         swap: word
-        scan_interval: 10
         precision: 0
         scale: 10
         unit_of_measurement: "W"
         device_class: power
         state_class: measurement
+        scan_interval: &scan_interval_realtime 5
 
       - name: "iHM grid import energy"
         unique_id: ihm_grid_import_energy
@@ -51,7 +66,7 @@ modbus:
         device_class: energy
         state_class: total_increasing
         scale: 0.1
-        scan_interval: 600
+        scan_interval: &scan_interval_slowest 600
 
       - name: "iHM grid export energy"
         unique_id: ihm_grid_export_energy
@@ -65,7 +80,7 @@ modbus:
         device_class: energy
         state_class: total_increasing
         scale: 0.1
-        scan_interval: 600
+        scan_interval: *scan_interval_slowest
 
       - name: "iHM charger status"
         unique_id: ihm_charger_status
@@ -73,9 +88,60 @@ modbus:
         slave: *sg_device_address
         input_type: input
         data_type: uint16
-        scan_interval: 30
+        scan_interval: &scan_interval_medium 60
 
       # Hold registers (address type: 4X)
+
+      - name: "iHM Energy management mode"
+        unique_id: ihm_energy_management_mode
+        address: 8023 # reg 8024
+        slave: *sg_device_address
+        input_type: holding
+        data_type: uint16
+        scan_interval: *scan_interval_medium
+
+      - name: "iHM Charging/discharging command"
+        unique_id: ihm_charging_discharging_command
+        address: 8024 # reg 8025
+        slave: *sg_device_address
+        input_type: holding
+        data_type: uint16
+        scan_interval: *scan_interval_medium
+
+      - name: "iHM Charging/discharging power"
+        unique_id: ihm_charging_discharging_power
+        address: 8025 # reg 8026
+        slave: *sg_device_address
+        input_type: holding
+        data_type: uint32
+        swap: word
+        scale: 0.1
+        precision: 1
+        unit_of_measurement: "kW"
+        device_class: power
+        scan_interval: *scan_interval_medium
+
+      - name: "iHM Feedin Power Limit Ratio"
+        unique_id: ihm_feedin_power_limit_ratio
+        address: 8030  # reg 8031
+        slave: *sg_device_address
+        input_type: holding
+        data_type: int32
+        swap: word
+        scale: 0.1
+        precision: 1
+        min_value: 0
+        max_value: 1000
+        unit_of_measurement: "%"
+        scan_interval: *scan_interval_medium
+
+      - name: "iHM charger power status"
+        unique_id: ihm_charger_power status
+        address: 8046 # reg 8047
+        slave: *sg_device_address
+        input_type: holding
+        data_type: uint16
+        scan_interval: *scan_interval_medium
 
       - name: "iHM charger mode"
         unique_id: ihm_charger_mode
@@ -83,7 +149,7 @@ modbus:
         slave: *sg_device_address
         input_type: holding
         data_type: uint16
-        scan_interval: 30
+        scan_interval: *scan_interval_medium
 
       - name: "iHM charger enabled"
         unique_id: ihm_charger_enabled
@@ -91,7 +157,7 @@ modbus:
         slave: *sg_device_address
         input_type: holding
         data_type: uint16
-        scan_interval: 30
+        scan_interval: *scan_interval_medium
 
       - name: "iHM charger grid enabled"
         unique_id: ihm_charger_grid_enabled
@@ -99,7 +165,7 @@ modbus:
         slave: *sg_device_address
         input_type: holding
         data_type: uint16
-        scan_interval: 30
+        scan_interval: *scan_interval_medium
 
       - name: "iHM charger power limitation"
         unique_id: ihm_charger_power_limitation
@@ -107,20 +173,22 @@ modbus:
         slave: *sg_device_address
         input_type: holding
         data_type: uint16
-        scan_interval: 30
+        scan_interval: *scan_interval_medium
 
 
-      # not working. returns 32767 
-      # - name: "iHM charger power limit"
-      #  unique_id: ihm_charger_power_limit
-      #  address: 8051 # reg 8052
-      #  slave: *sg_device_address
-      #  input_type: holding
-      #  data_type: uint16
-      #  scale: 0.1
-      #  precision: 1
-      #  unit_of_measurement: "%"
-      #  scan_interval: 30
+      # Returned value 32767 until I set value in correct range.
+      - name: "iHM charger power limit"
+        unique_id: ihm_charger_power_limit
+        address: 8051 # reg 8052
+        slave: *sg_device_address
+        input_type: holding
+        data_type: uint16
+        scale: 0.1
+        precision: 1
+        min_value: 0
+        max_value: 1000
+        unit_of_measurement: "%"
+        scan_interval: *scan_interval_medium
 
 template:
   - sensor:
@@ -183,6 +251,64 @@ template:
             mdi:help-circle
           {% endif %}
 
+      - name: "iHM Energy Management Mode Friendly"
+        unique_id: ihm_energy_management_mode_friendly
+        state: >
+          {% set mode = states('sensor.ihm_energy_management_mode') | int(0) %}
+          {% if mode == 1 %}
+            Self-consumption
+          {% elif mode == 2 %}
+            Time Plan
+          {% elif mode == 0 %}
+            AI Mode
+          {% elif mode == 4 %}
+            VPP
+          {% elif mode == 5 %}
+            Forced Mode
+          {% else %}
+            Unknown ({{ mode }})
+          {% endif %}
+        icon: >
+          {% set mode = states('sensor.ihm_energy_management_mode') | int(0) %}
+          {% if mode == 1 %}
+            mdi:home-lightning-bolt
+          {% elif mode == 2 %}
+            mdi:clock
+          {% elif mode == 0 %}
+            mdi:magic-staff
+          {% elif mode == 4 %}
+            mdi:transmission-tower
+          {% elif mode == 5 %}
+            mdi:lock
+          {% else %}
+            mdi:help-circle
+          {% endif %}
+
+      - name: "iHM Battery Command Friendly"
+        unique_id: ihm_battery_command_friendly
+        state: >
+          {% set cmd = states('sensor.ihm_charging_discharging_command') | int(0) %}
+          {% if cmd == 170 %}
+            Charging
+          {% elif cmd == 187 %}
+            Discharging
+          {% elif cmd == 204 %}
+            Stopped
+          {% else %}
+            Unknown ({{ cmd }})
+          {% endif %}
+        icon: >
+          {% set cmd = states('sensor.ihm_charging_discharging_command') | int(0) %}
+          {% if cmd == 170 %}
+            mdi:battery-charging
+          {% elif cmd == 187 %}
+            mdi:battery-minus
+          {% elif cmd == 204 %}
+            mdi:battery-off
+          {% else %}
+            mdi:help-circle
+          {% endif %}
+
       - name: "EV Charger Mode"
         unique_id: ihm_charger_mode_friendly
         state: >
@@ -209,7 +335,9 @@ template:
           {% endif %}
 
   - binary_sensor:
-      - name: "iHM Charger Grid Enabled"
+
+      # 170 = enabled, 85 = disabled
+      - name: "EV Charger Grid Enabled"
         unique_id: ihm_charger_grid_enabled_friendly
         state: >
           {{ states('sensor.ihm_charger_grid_enabled') | int(0) == 170 }}
@@ -219,4 +347,28 @@ template:
             mdi:transmission-tower-export
           {% else %}
             mdi:transmission-tower-off
+          {% endif %}
+
+  - binary_sensor:
+      - name: "iHM Charger Enabled"
+        unique_id: ihm_charger_enabled_binary
+        state: >
+          {{ states('sensor.ihm_charger_enabled') | int(0) == 170 }}
+        icon: >
+          {% if states('sensor.ihm_charger_enabled') | int(0) == 170 %}
+            mdi:ev-station
+          {% else %}
+            mdi:power-plug-off-outline
+          {% endif %}
+
+      - name: "EV Charger Power Limit Enabled"
+        unique_id: ihm_charger_power_limitation_friendly
+        state: >
+          {{ states('sensor.ihm_charger_power_limitation') | int(0) == 170 }}
+        device_class: power
+        icon: >
+          {% if states('sensor.ihm_charger_power_limitation') | int(0) == 170 %}
+            mdi:speedometer
+          {% else %}
+            mdi:speedometer-slow
           {% endif %}
