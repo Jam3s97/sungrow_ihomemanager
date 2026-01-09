@@ -1,225 +1,736 @@
-# Home Assistant Sungrow iHomeManager integration
+# Home Assistant Sungrow iHomeManager (iHM) Integration
+# Last Updated: 2025-01-07
+#
+#
+# IMPORTANT: This configuration is designed to co-exist with the Sungrow inverter YAML.
+# - unique_ids are prefixed with "ihm_" to prevent registry conflicts
+# - Names include context "iHM" to prevent entity_id conflicts
+#
+# Add to secrets.yaml:
+# ihm_modbus_host_ip: 10.40.0.31
+# ihm_modbus_port: 503
+# ihm_modbus_device_address: 247
 
 modbus:
-  - name: &sg_hub_name Sungrow_iHM
+  - name: &ihm_hub_name Sungrow_iHM
     type: tcp
-    host: &sg_host 10.40.0.31 # TODO update with the IP of your iHM. No default. Check your router.
-    port: &sg_port 503 # TODO update with the Modbus port of your iHM. Default is '502' but found 502 unresponsive.
+    host: !secret ihm_modbus_host_ip
+    port: !secret ihm_modbus_port
     delay: 5
     timeout: 10
 
     sensors:
+      #####################
+      # INPUT REGISTERS (Read-Only)
+      # Address Type: 3X
+      #####################
 
-      # Input registers (address type: 3X)
+      #############
+      # Device Information
+      #############
 
-      - name: "iHM total active power"
+      - name: iHM device type code
+        unique_id: ihm_device_type_code
+        slave: !secret ihm_modbus_device_address
+        address: 7999 # reg 8000
+        input_type: input
+        data_type: uint16
+        scan_interval: &scan_interval_once 3600
+
+      - name: iHM protocol number
+        unique_id: ihm_protocol_number
+        slave: !secret ihm_modbus_device_address
+        address: 8000 # reg 8001
+        input_type: input
+        data_type: uint32
+        swap: word
+        scan_interval: *scan_interval_once
+
+      - name: iHM protocol version
+        unique_id: ihm_protocol_version
+        slave: !secret ihm_modbus_device_address
+        address: 8002 # reg 8003
+        input_type: input
+        data_type: uint32
+        swap: word
+        scan_interval: *scan_interval_once
+
+      - name: iHM total devices connected
+        unique_id: ihm_total_devices_connected
+        slave: !secret ihm_modbus_device_address
+        address: 8004 # reg 8005
+        input_type: input
+        data_type: uint16
+        state_class: measurement
+        scan_interval: &scan_interval_slow 300
+
+      - name: iHM devices in fault
+        unique_id: ihm_devices_in_fault
+        slave: !secret ihm_modbus_device_address
+        address: 8005 # reg 8006
+        input_type: input
+        data_type: uint16
+        state_class: measurement
+        scan_interval: &scan_interval_medium 60
+
+      #############
+      # System Capacity
+      #############
+
+      - name: iHM total nominal active power
+        unique_id: ihm_total_nominal_active_power
+        slave: !secret ihm_modbus_device_address
+        address: 8144 # reg 8145
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        scale: 0.1
+        unit_of_measurement: kW
+        device_class: power
+        scan_interval: *scan_interval_slow
+
+      - name: iHM total battery rated capacity
+        unique_id: ihm_total_battery_rated_capacity
+        slave: !secret ihm_modbus_device_address
+        address: 8146 # reg 8147
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        scale: 0.1
+        unit_of_measurement: kWh
+        device_class: energy
+        scan_interval: *scan_interval_slow
+
+      #############
+      # Battery Limits
+      #############
+
+      - name: iHM battery charge discharge limit
+        unique_id: ihm_battery_charge_discharge_limit
+        slave: !secret ihm_modbus_device_address
+        address: 8148 # reg 8149
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 1
+        scale: 0.1
+        unit_of_measurement: kW
+        device_class: power
+        scan_interval: *scan_interval_medium
+
+      - name: iHM battery max charge power
+        unique_id: ihm_battery_max_charge_power
+        slave: !secret ihm_modbus_device_address
+        address: 8150 # reg 8151
+        input_type: input
+        data_type: uint16
+        precision: 1
+        scale: 0.1
+        unit_of_measurement: kW
+        device_class: power
+        scan_interval: *scan_interval_medium
+
+      - name: iHM battery min charge power
+        unique_id: ihm_battery_min_charge_power
+        slave: !secret ihm_modbus_device_address
+        address: 8151 # reg 8152
+        input_type: input
+        data_type: uint16
+        precision: 1
+        scale: 0.1
+        unit_of_measurement: kW
+        device_class: power
+        scan_interval: *scan_interval_medium
+
+      - name: iHM battery max discharge power
+        unique_id: ihm_battery_max_discharge_power
+        slave: !secret ihm_modbus_device_address
+        address: 8152 # reg 8153
+        input_type: input
+        data_type: uint16
+        precision: 1
+        scale: 0.1
+        unit_of_measurement: kW
+        device_class: power
+        scan_interval: *scan_interval_medium
+
+      - name: iHM battery min discharge power
+        unique_id: ihm_battery_min_discharge_power
+        slave: !secret ihm_modbus_device_address
+        address: 8153 # reg 8154
+        input_type: input
+        data_type: uint16
+        precision: 1
+        scale: 0.1
+        unit_of_measurement: kW
+        device_class: power
+        scan_interval: *scan_interval_medium
+
+      #############
+      # Real-Time Power
+      #############
+
+      - name: iHM total active power
         unique_id: ihm_total_active_power
+        slave: !secret ihm_modbus_device_address
         address: 8154 # reg 8155
-        slave: &sg_device_address 247 # TODO update with the slave address. Default 247
         input_type: input
         data_type: int32
         swap: word
         precision: 0
         scale: 10
-        unit_of_measurement: "W"
+        unit_of_measurement: W
         device_class: power
         state_class: measurement
         scan_interval: &scan_interval_fast 10
 
-      - name: "iHM meter power signed"
-        unique_id: ihm_meter_power_signed
+      # NOTE: positive when importing, negative when exporting
+      - name: iHM meter power raw
+        unique_id: ihm_meter_power_raw
+        slave: !secret ihm_modbus_device_address
         address: 8156 # reg 8157
-        slave: *sg_device_address
         input_type: input
         data_type: int32
         swap: word
         precision: 0
         scale: 10
-        unit_of_measurement: "W"
+        unit_of_measurement: W
         device_class: power
         state_class: measurement
         scan_interval: *scan_interval_fast
 
-      - name: "iHM load power"
+      - name: iHM load power
         unique_id: ihm_load_power
+        slave: !secret ihm_modbus_device_address
         address: 8158 # reg 8159
-        slave: *sg_device_address
         input_type: input
         data_type: int32
         swap: word
         precision: 0
         scale: 10
-        unit_of_measurement: "W"
+        unit_of_measurement: W
         device_class: power
         state_class: measurement
         scan_interval: &scan_interval_realtime 5
 
-      - name: "iHM grid import energy"
+      # NOTE: positive when charging, negative when discharging
+      - name: iHM battery power raw
+        unique_id: ihm_battery_power_raw
+        slave: !secret ihm_modbus_device_address
+        address: 8160 # reg 8161
+        input_type: input
+        data_type: int32
+        swap: word
+        precision: 0
+        scale: 10
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      #############
+      # Battery State
+      #############
+
+      - name: iHM battery level
+        unique_id: ihm_battery_level
+        slave: !secret ihm_modbus_device_address
+        address: 8162 # reg 8163
+        input_type: input
+        data_type: uint16
+        precision: 1
+        scale: 0.1
+        unit_of_measurement: "%"
+        device_class: battery
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      #############
+      # Energy Totals
+      #############
+
+      - name: iHM grid import energy
         unique_id: ihm_grid_import_energy
+        slave: !secret ihm_modbus_device_address
         address: 8175 # reg 8176
-        slave: *sg_device_address
         input_type: input
         data_type: uint32
         swap: word
         precision: 1
-        unit_of_measurement: "kWh"
+        scale: 0.1
+        unit_of_measurement: kWh
         device_class: energy
         state_class: total_increasing
-        scale: 0.1
         scan_interval: &scan_interval_slowest 600
 
-      - name: "iHM grid export energy"
+      - name: iHM grid export energy
         unique_id: ihm_grid_export_energy
+        slave: !secret ihm_modbus_device_address
         address: 8177 # reg 8178
-        slave: *sg_device_address
         input_type: input
         data_type: uint32
         swap: word
         precision: 1
-        unit_of_measurement: "kWh"
+        scale: 0.1
+        unit_of_measurement: kWh
         device_class: energy
         state_class: total_increasing
-        scale: 0.1
         scan_interval: *scan_interval_slowest
 
-      - name: "iHM charger status"
-        unique_id: ihm_charger_status
-        address: 8551 # reg 8552
-        slave: *sg_device_address
+      #############
+      # Grid Meter - Channel 1
+      #############
+
+      - name: iHM output type raw
+        unique_id: ihm_output_type_raw
+        slave: !secret ihm_modbus_device_address
+        address: 8553 # reg 8554
         input_type: input
         data_type: uint16
-        scan_interval: &scan_interval_medium 60
+        scan_interval: *scan_interval_slow
 
-      # Hold registers (address type: 4X)
+      - name: iHM phase A voltage
+        unique_id: ihm_phase_a_voltage
+        slave: !secret ihm_modbus_device_address
+        address: 8554 # reg 8555
+        input_type: input
+        data_type: uint16
+        precision: 1
+        scale: 0.1
+        unit_of_measurement: V
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_medium
 
-      - name: "iHM Energy management mode"
-        unique_id: ihm_energy_management_mode
+      - name: iHM phase B voltage
+        unique_id: ihm_phase_b_voltage
+        slave: !secret ihm_modbus_device_address
+        address: 8555 # reg 8556
+        input_type: input
+        data_type: uint16
+        precision: 1
+        scale: 0.1
+        unit_of_measurement: V
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_medium
+
+      - name: iHM phase C voltage
+        unique_id: ihm_phase_c_voltage
+        slave: !secret ihm_modbus_device_address
+        address: 8556 # reg 8557
+        input_type: input
+        data_type: uint16
+        precision: 1
+        scale: 0.1
+        unit_of_measurement: V
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_medium
+
+      - name: iHM grid frequency
+        unique_id: ihm_grid_frequency
+        slave: !secret ihm_modbus_device_address
+        address: 8557 # reg 8558
+        input_type: input
+        data_type: uint16
+        precision: 1
+        scale: 0.1
+        unit_of_measurement: Hz
+        device_class: frequency
+        state_class: measurement
+        scan_interval: *scan_interval_medium
+
+      - name: iHM phase A active power
+        unique_id: ihm_meter_phase_a_active_power
+        slave: !secret ihm_modbus_device_address
+        address: 8558 # reg 8559
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      - name: iHM phase B active power
+        unique_id: ihm_meter_phase_b_active_power
+        slave: !secret ihm_modbus_device_address
+        address: 8560 # reg 8561
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      - name: iHM phase C active power
+        unique_id: ihm_meter_phase_c_active_power
+        slave: !secret ihm_modbus_device_address
+        address: 8562 # reg 8563
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      #############
+      # Grid Meter - Channel 2
+      #############
+
+      - name: iHM phase A voltage ch2
+        unique_id: ihm_phase_a_voltage_ch2
+        slave: !secret ihm_modbus_device_address
+        address: 8564 # reg 8565
+        input_type: input
+        data_type: uint16
+        precision: 1
+        scale: 0.1
+        unit_of_measurement: V
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_medium
+
+      - name: iHM phase B voltage ch2
+        unique_id: ihm_phase_b_voltage_ch2
+        slave: !secret ihm_modbus_device_address
+        address: 8565 # reg 8566
+        input_type: input
+        data_type: uint16
+        precision: 1
+        scale: 0.1
+        unit_of_measurement: V
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_medium
+
+      - name: iHM phase C voltage ch2
+        unique_id: ihm_phase_c_voltage_ch2
+        slave: !secret ihm_modbus_device_address
+        address: 8566 # reg 8567
+        input_type: input
+        data_type: uint16
+        precision: 1
+        scale: 0.1
+        unit_of_measurement: V
+        device_class: voltage
+        state_class: measurement
+        scan_interval: *scan_interval_medium
+
+      - name: iHM grid frequency ch2
+        unique_id: ihm_grid_frequency_ch2
+        slave: !secret ihm_modbus_device_address
+        address: 8567 # reg 8568
+        input_type: input
+        data_type: uint16
+        precision: 1
+        scale: 0.1
+        unit_of_measurement: Hz
+        device_class: frequency
+        state_class: measurement
+        scan_interval: *scan_interval_medium
+
+      - name: iHM phase A active power ch2
+        unique_id: ihm_meter_phase_a_active_power_ch2
+        slave: !secret ihm_modbus_device_address
+        address: 8568 # reg 8569
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      - name: iHM phase B active power ch2
+        unique_id: ihm_meter_phase_b_active_power_ch2
+        slave: !secret ihm_modbus_device_address
+        address: 8570 # reg 8571
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      - name: iHM phase C active power ch2
+        unique_id: ihm_meter_phase_c_active_power_ch2
+        slave: !secret ihm_modbus_device_address
+        address: 8572 # reg 8573
+        input_type: input
+        data_type: uint32
+        swap: word
+        precision: 0
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      #############
+      # Charger Status
+      #############
+
+      - name: Charger status raw
+        unique_id: ihm_charger_status_raw
+        slave: !secret ihm_modbus_device_address
+        address: 8551 # reg 8552
+        input_type: input
+        data_type: uint16
+        state_class: measurement
+        scan_interval: *scan_interval_medium
+
+      #####################
+      # HOLDING REGISTERS (Read/Write)
+      # Address Type: 4X
+      #####################
+
+      #############
+      # EMS Settings
+      #############
+
+      - name: iHM energy management mode raw
+        unique_id: ihm_energy_management_mode_raw
+        slave: !secret ihm_modbus_device_address
         address: 8023 # reg 8024
-        slave: *sg_device_address
         input_type: holding
         data_type: uint16
+        state_class: measurement
         scan_interval: *scan_interval_medium
 
-      - name: "iHM Charging/discharging command"
-        unique_id: ihm_charging_discharging_command
+      - name: iHM charging discharging command raw
+        unique_id: ihm_charging_discharging_command_raw
+        slave: !secret ihm_modbus_device_address
         address: 8024 # reg 8025
-        slave: *sg_device_address
         input_type: holding
         data_type: uint16
+        state_class: measurement
         scan_interval: *scan_interval_medium
 
-      - name: "iHM Charging/discharging power"
+      - name: iHM charging discharging power
         unique_id: ihm_charging_discharging_power
+        slave: !secret ihm_modbus_device_address
         address: 8025 # reg 8026
-        slave: *sg_device_address
         input_type: holding
         data_type: uint32
         swap: word
-        scale: 0.1
         precision: 1
-        unit_of_measurement: "kW"
+        scale: 0.1
+        unit_of_measurement: kW
         device_class: power
+        state_class: measurement
         scan_interval: *scan_interval_medium
 
-      - name: "iHM Feedin Power Limit Ratio"
-        unique_id: ihm_feedin_power_limit_ratio
-        address: 8030  # reg 8031
-        slave: *sg_device_address
+      - name: iHM feed-in power limit ratio
+        unique_id: ihm_feed_in_power_limit_ratio
+        slave: !secret ihm_modbus_device_address
+        address: 8030 # reg 8031
         input_type: holding
         data_type: int32
         swap: word
-        scale: 0.1
         precision: 1
-        min_value: 0
-        max_value: 1000
+        scale: 0.1
         unit_of_measurement: "%"
+        state_class: measurement
         scan_interval: *scan_interval_medium
 
-      - name: "iHM charger power status"
-        unique_id: ihm_charger_power status
+      - name: iHM external vpp heartbeat
+        unique_id: ihm_external_vpp_heartbeat
+        slave: !secret ihm_modbus_device_address
+        address: 8032 # reg 8033
+        input_type: holding
+        data_type: uint16
+        unit_of_measurement: s
+        state_class: measurement
+        scan_interval: *scan_interval_medium
+
+      #############
+      # System Control
+      #############
+
+      - name: iHM power on off raw
+        unique_id: ihm_power_on_off_raw
+        slave: !secret ihm_modbus_device_address
         address: 8046 # reg 8047
-        slave: *sg_device_address
         input_type: holding
         data_type: uint16
+        state_class: measurement
         scan_interval: *scan_interval_medium
 
-      - name: "iHM charger mode"
-        unique_id: ihm_charger_mode
+      #############
+      # Charger Control
+      #############
+
+      - name: Charger mode raw
+        unique_id: ihm_charger_mode_raw
+        slave: !secret ihm_modbus_device_address
         address: 8047 # reg 8048
-        slave: *sg_device_address
         input_type: holding
         data_type: uint16
+        state_class: measurement
         scan_interval: *scan_interval_medium
 
-      - name: "iHM charger enabled"
-        unique_id: ihm_charger_enabled
+      - name: Charger enable raw
+        unique_id: ihm_charger_enable_raw
+        slave: !secret ihm_modbus_device_address
         address: 8048 # reg 8049
-        slave: *sg_device_address
         input_type: holding
         data_type: uint16
+        state_class: measurement
         scan_interval: *scan_interval_medium
 
-      - name: "iHM charger grid enabled"
-        unique_id: ihm_charger_grid_enabled
+      - name: Charger grid power draw raw
+        unique_id: ihm_charger_grid_power_draw_raw
+        slave: !secret ihm_modbus_device_address
         address: 8049 # reg 8050
-        slave: *sg_device_address
         input_type: holding
         data_type: uint16
+        state_class: measurement
         scan_interval: *scan_interval_medium
 
-      - name: "iHM charger power limitation"
-        unique_id: ihm_charger_power_limitation
+      - name: Charger power limitation enable raw
+        unique_id: ihm_charger_power_limitation_enable_raw
+        slave: !secret ihm_modbus_device_address
         address: 8050 # reg 8051
-        slave: *sg_device_address
         input_type: holding
         data_type: uint16
+        state_class: measurement
         scan_interval: *scan_interval_medium
 
-
-      # Returned value 32767 until I set value in correct range.
-      - name: "iHM charger power limit"
-        unique_id: ihm_charger_power_limit
+      - name: Charger power limit percentage
+        unique_id: ihm_charger_power_limit_percentage
+        slave: !secret ihm_modbus_device_address
         address: 8051 # reg 8052
-        slave: *sg_device_address
         input_type: holding
         data_type: uint16
-        scale: 0.1
         precision: 1
-        min_value: 0
-        max_value: 1000
+        scale: 0.1
         unit_of_measurement: "%"
+        state_class: measurement
         scan_interval: *scan_interval_medium
 
 template:
+  ###########################
+  # template: sensor
+  ###########################
   - sensor:
-      - name: "iHM import power"
-        unique_id: ihm_import_power
-        device_class: power
-        state_class: measurement
-        unit_of_measurement: "W"
-        availability: >-
-          {{ states('sensor.ihm_meter_power_signed') not in ['unknown','unavailable',''] }}
-        state: >-
-          {% set v = states('sensor.ihm_meter_power_signed')|float(0) %}
-          {{ (v if v > 0 else 0) | round(0) | int }}
+      #############
+      # Power Flow Sensors
+      #############
 
-      - name: "iHM export power"
-        unique_id: ihm_export_power
+      # positive if importing, else zero
+      - name: iHM grid import power
+        unique_id: ihm_grid_import_power
+        unit_of_measurement: W
         device_class: power
         state_class: measurement
-        unit_of_measurement: "W"
         availability: >-
-          {{ states('sensor.ihm_meter_power_signed') not in ['unknown','unavailable',''] }}
+          {{ states('sensor.ihm_meter_power_raw') not in ['unknown','unavailable'] }}
         state: >-
-          {% set v = states('sensor.ihm_meter_power_signed')|float(0) %}
-          {{ ((-v) if v < 0 else 0) | round(0) | int }}
+          {% if states('sensor.ihm_meter_power_raw')|int > 0 %}
+            {{ states('sensor.ihm_meter_power_raw')|int }}
+          {% else %}
+            0
+          {% endif %}
+        icon: mdi:transmission-tower-import
+
+      # positive if exporting, else zero
+      - name: iHM grid export power
+        unique_id: ihm_grid_export_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: >-
+          {{ states('sensor.ihm_meter_power_raw') not in ['unknown','unavailable'] }}
+        state: >-
+          {% if states('sensor.ihm_meter_power_raw')|int < 0 %}
+            {{ states('sensor.ihm_meter_power_raw')|int * -1 }}
+          {% else %}
+            0
+          {% endif %}
+        icon: mdi:transmission-tower-export
+
+      #############
+      # Battery Power Direction
+      #############
+
+      # NOTE: Use this sensor for the HA energy dashboard.
+      # positive if charging, negative if discharging
+      - name: iHM battery charging power signed
+        unique_id: ihm_battery_charging_power_signed
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: >-
+          {{ states('sensor.ihm_battery_power_raw') not in ['unknown','unavailable'] }}
+        state: >-
+          {{ states('sensor.ihm_battery_power_raw')|int }}
+
+      # positive if charging, else zero
+      - name: iHM battery charging power
+        unique_id: ihm_battery_charging_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: >-
+          {{ states('sensor.ihm_battery_charging_power_signed') not in ['unknown','unavailable'] }}
+        state: >-
+          {% if states('sensor.ihm_battery_charging_power_signed')|int > 0 %}
+            {{ states('sensor.ihm_battery_charging_power_signed')|int }}
+          {% else %}
+            0
+          {% endif %}
+
+      # NOTE: Use this sensor for the HA energy dashboard.
+      # positive if discharging, negative if charging
+      - name: iHM battery discharging power signed
+        unique_id: ihm_battery_discharging_power_signed
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: >-
+          {{ states('sensor.ihm_battery_power_raw') not in ['unknown','unavailable'] }}
+        state: >-
+          {{ states('sensor.ihm_battery_power_raw')|int * -1 }}
+
+      # positive if discharging, else zero
+      - name: iHM battery discharging power
+        unique_id: ihm_battery_discharging_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        availability: >-
+          {{ states('sensor.ihm_battery_discharging_power_signed') not in ['unknown','unavailable'] }}
+        state: >-
+          {% if states('sensor.ihm_battery_discharging_power_signed')|int > 0 %}
+            {{ states('sensor.ihm_battery_discharging_power_signed')|int }}
+          {% else %}
+            0
+          {% endif %}
+
+      #############
+      # Friendly Status Text
+      #############
 
         # status 4 was seen shortly after connecting charger. may need to check iSolarCloud logs to determine what it is.
         # add icon for status 4 once determined
-      - name: "EV Charger Status"
-        unique_id: ihm_charger_status_friendly
-        state: >
-          {% set status = states('sensor.ihm_charger_status') | int(0) %}
+      - name: Charger status
+        unique_id: ihm_charger_status
+        device_class: enum
+        availability: >-
+          {{ states('sensor.charger_status_raw') not in ['unknown','unavailable'] }}
+        state: >-
+          {% set status = states('sensor.charger_status_raw')|int %}
           {% if status == 1 %}
             Idle (unplugged)
           {% elif status == 2 %}
@@ -233,10 +744,10 @@ template:
           {% elif status == 6 %}
             Charging completed
           {% else %}
-            Unknown
+            Unknown ({{ status }})
           {% endif %}
-        icon: >
-          {% set status = states('sensor.ihm_charger_status') | int(0) %}
+        icon: >-
+          {% set status = states('sensor.charger_status_raw')|int %}
           {% if status == 1 %}
             mdi:ev-plug-type2
           {% elif status == 2 %}
@@ -251,31 +762,34 @@ template:
             mdi:help-circle
           {% endif %}
 
-      - name: "iHM Energy Management Mode Friendly"
-        unique_id: ihm_energy_management_mode_friendly
-        state: >
-          {% set mode = states('sensor.ihm_energy_management_mode') | int(0) %}
+      - name: iHM energy management mode
+        unique_id: ihm_energy_management_mode
+        device_class: enum
+        availability: >-
+          {{ states('sensor.ihm_energy_management_mode_raw') not in ['unknown','unavailable'] }}
+        state: >-
+          {% set mode = states('sensor.ihm_energy_management_mode_raw')|int %}
           {% if mode == 1 %}
             Self-consumption
           {% elif mode == 2 %}
-            Time Plan
+            Time plan
           {% elif mode == 0 %}
             AI Mode
           {% elif mode == 4 %}
             VPP
           {% elif mode == 5 %}
-            Forced Mode
+            Forced mode
           {% else %}
             Unknown ({{ mode }})
           {% endif %}
-        icon: >
-          {% set mode = states('sensor.ihm_energy_management_mode') | int(0) %}
+        icon: >-
+          {% set mode = states('sensor.ihm_energy_management_mode_raw')|int %}
           {% if mode == 1 %}
             mdi:home-lightning-bolt
           {% elif mode == 2 %}
-            mdi:clock
+            mdi:clock-outline
           {% elif mode == 0 %}
-            mdi:magic-staff
+            mdi:robot
           {% elif mode == 4 %}
             mdi:transmission-tower
           {% elif mode == 5 %}
@@ -284,21 +798,24 @@ template:
             mdi:help-circle
           {% endif %}
 
-      - name: "iHM Battery Command Friendly"
-        unique_id: ihm_battery_command_friendly
-        state: >
-          {% set cmd = states('sensor.ihm_charging_discharging_command') | int(0) %}
+      - name: iHM battery command
+        unique_id: ihm_battery_command
+        device_class: enum
+        availability: >-
+          {{ states('sensor.ihm_charging_discharging_command_raw') not in ['unknown','unavailable'] }}
+        state: >-
+          {% set cmd = states('sensor.ihm_charging_discharging_command_raw')|int %}
           {% if cmd == 170 %}
-            Charging
+            Charge
           {% elif cmd == 187 %}
-            Discharging
+            Discharge
           {% elif cmd == 204 %}
-            Stopped
+            Stop
           {% else %}
             Unknown ({{ cmd }})
           {% endif %}
-        icon: >
-          {% set cmd = states('sensor.ihm_charging_discharging_command') | int(0) %}
+        icon: >-
+          {% set cmd = states('sensor.ihm_charging_discharging_command_raw')|int %}
           {% if cmd == 170 %}
             mdi:battery-charging
           {% elif cmd == 187 %}
@@ -309,10 +826,13 @@ template:
             mdi:help-circle
           {% endif %}
 
-      - name: "EV Charger Mode"
-        unique_id: ihm_charger_mode_friendly
-        state: >
-          {% set mode = states('sensor.ihm_charger_mode') | int(0) %}
+      - name: Charger mode
+        unique_id: ihm_charger_mode
+        device_class: enum
+        availability: >-
+          {{ states('sensor.charger_mode_raw') not in ['unknown','unavailable'] }}
+        state: >-
+          {% set mode = states('sensor.charger_mode_raw')|int %}
           {% if mode == 164 %}
             Fast charging
           {% elif mode == 165 %}
@@ -322,8 +842,8 @@ template:
           {% else %}
             Unknown ({{ mode }})
           {% endif %}
-        icon: >
-          {% set mode = states('sensor.ihm_charger_mode') | int(0) %}
+        icon: >-
+          {% set mode = states('sensor.charger_mode_raw')|int %}
           {% if mode == 164 %}
             mdi:lightning-bolt
           {% elif mode == 165 %}
@@ -334,41 +854,123 @@ template:
             mdi:help-circle
           {% endif %}
 
+      - name: iHM output type
+        unique_id: ihm_output_type
+        device_class: enum
+        availability: >-
+          {{ states('sensor.ihm_output_type_raw') not in ['unknown','unavailable'] }}
+        state: >-
+          {% set type = states('sensor.ihm_output_type_raw')|int %}
+          {% if type == 0 %}
+            Single-phase
+          {% elif type == 1 %}
+            Three-phase four-wire
+          {% elif type == 2 %}
+            Three-phase three-wire
+          {% else %}
+            Unknown ({{ type }})
+          {% endif %}
+        icon: mdi:sine-wave
+
+  ###########################
+  # template: binary_sensor
+  ###########################
   - binary_sensor:
 
-      # 170 = enabled, 85 = disabled
-      - name: "EV Charger Grid Enabled"
-        unique_id: ihm_charger_grid_enabled_friendly
-        state: >
-          {{ states('sensor.ihm_charger_grid_enabled') | int(0) == 170 }}
+      - name: Charger enabled
+        unique_id: ihm_charger_enabled
+        device_class: running
+        availability: >-
+          {{ states('sensor.charger_enable_raw') not in ['unknown','unavailable'] }}
+        state: >-
+          {{ states('sensor.charger_enable_raw')|int == 170 }}
+        icon: >-
+          {% if states('sensor.charger_enable_raw')|int == 170 %}
+            mdi:ev-station
+          {% else %}
+            mdi:ev-station-off
+          {% endif %}
+
+      - name: Charger grid power draw
+        unique_id: ihm_charger_grid_power_draw
         device_class: power
-        icon: >
-          {% if states('sensor.ihm_charger_grid_enabled') | int(0) == 170 %}
+        availability: >-
+          {{ states('sensor.charger_grid_power_draw_raw') not in ['unknown','unavailable'] }}
+        state: >-
+          {{ states('sensor.charger_grid_power_draw_raw')|int == 170 }}
+        icon: >-
+          {% if states('sensor.charger_grid_power_draw_raw')|int == 170 %}
             mdi:transmission-tower-export
           {% else %}
             mdi:transmission-tower-off
           {% endif %}
 
-  - binary_sensor:
-      - name: "iHM Charger Enabled"
-        unique_id: ihm_charger_enabled_binary
-        state: >
-          {{ states('sensor.ihm_charger_enabled') | int(0) == 170 }}
-        icon: >
-          {% if states('sensor.ihm_charger_enabled') | int(0) == 170 %}
-            mdi:ev-station
-          {% else %}
-            mdi:power-plug-off-outline
-          {% endif %}
-
-      - name: "EV Charger Power Limit Enabled"
-        unique_id: ihm_charger_power_limitation_friendly
-        state: >
-          {{ states('sensor.ihm_charger_power_limitation') | int(0) == 170 }}
+      - name: Charger power limitation
+        unique_id: ihm_charger_power_limitation
         device_class: power
-        icon: >
-          {% if states('sensor.ihm_charger_power_limitation') | int(0) == 170 %}
+        availability: >-
+          {{ states('sensor.charger_power_limitation_enable_raw') not in ['unknown','unavailable'] }}
+        state: >-
+          {{ states('sensor.charger_power_limitation_enable_raw')|int == 170 }}
+        icon: >-
+          {% if states('sensor.charger_power_limitation_enable_raw')|int == 170 %}
             mdi:speedometer
           {% else %}
             mdi:speedometer-slow
+          {% endif %}
+
+      - name: iHM system powered on
+        unique_id: ihm_system_powered_on
+        device_class: power
+        availability: >-
+          {{ states('sensor.ihm_power_on_off_raw') not in ['unknown','unavailable'] }}
+        state: >-
+          {{ states('sensor.ihm_power_on_off_raw')|int == 207 }}
+        icon: >-
+          {% if states('sensor.ihm_power_on_off_raw')|int == 207 %}
+            mdi:power-on
+          {% else %}
+            mdi:power-off
+          {% endif %}
+
+      - name: iHM battery charging
+        unique_id: ihm_battery_charging
+        device_class: battery_charging
+        availability: >-
+          {{ states('sensor.ihm_battery_power_raw') not in ['unknown','unavailable'] }}
+        state: >-
+          {{ states('sensor.ihm_battery_power_raw')|float(0) > 50 }}
+        icon: >-
+          {% if states('sensor.ihm_battery_power_raw')|float(0) > 50 %}
+            mdi:battery-charging
+          {% else %}
+            mdi:battery
+          {% endif %}
+
+      - name: iHM grid importing
+        unique_id: ihm_grid_importing
+        device_class: power
+        availability: >-
+          {{ states('sensor.ihm_meter_power_raw') not in ['unknown','unavailable'] }}
+        state: >-
+          {{ states('sensor.ihm_meter_power_raw')|float(0) > 50 }}
+        icon: >-
+          {% if states('sensor.ihm_meter_power_raw')|float(0) > 50 %}
+            mdi:transmission-tower-import
+          {% else %}
+            mdi:transmission-tower
+          {% endif %}
+
+      - name: iHM Grid exporting
+        unique_id: ihm_grid_exporting
+        device_class: power
+        availability: >-
+          {{ states('sensor.ihm_meter_power_raw') not in ['unknown','unavailable'] }}
+        state: >-
+          {{ states('sensor.ihm_meter_power_raw')|float(0) < -50 }}
+        icon: >-
+          {% if states('sensor.ihm_meter_power_raw')|float(0) < -50 %}
+            mdi:transmission-tower-export
+          {% else %}
+            mdi:transmission-tower
           {% endif %}
