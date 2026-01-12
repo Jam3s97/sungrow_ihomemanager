@@ -1007,6 +1007,7 @@ template:
   - number:
   
       # max hard coded for testing (5.1 for 5.1 kw). should pull from inverter?
+      # to write 32 bit integer you need to specify the low word and the high word in an array value: ["{{ (value * 10) | int }}", 0]
       - name: iHM Export power limit
         unique_id: ihm_export_power_limit
         unit_of_measurement: kW
@@ -1023,7 +1024,7 @@ template:
               hub: *ihm_hub_name
               slave: !secret ihm_modbus_device_address
               address: *ihm_reg_feed_in_power_limit
-              value: "{{ (value * 10) | int }}"
+              value: ["{{ (value * 10) | int }}", 0]
           # manually refresh modbus register
           - action: homeassistant.update_entity
             target:
