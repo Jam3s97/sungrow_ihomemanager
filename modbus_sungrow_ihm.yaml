@@ -533,7 +533,7 @@ modbus:
 
       # Unknown on off register undocumented. 
       - name: iHM feed-in power limit mode raw
-        unique_id: iHM feed_in_power_limit_mode_raw
+        unique_id: iHM_feed_in_power_limit_mode_raw
         slave: !secret ihm_modbus_device_address
         address: 8027 # reg 8028
         input_type: holding
