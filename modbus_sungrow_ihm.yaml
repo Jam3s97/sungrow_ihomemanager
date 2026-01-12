@@ -4,7 +4,7 @@
 #
 # IMPORTANT: This configuration is designed to co-exist with the Sungrow inverter YAML.
 # - unique_ids are prefixed with "ihm_" to prevent registry conflicts
-# - Names include context "iHM" to prevent entity_id conflicts
+# - Names include context (Meter/iHM) to prevent entity_id conflicts
 #
 # Add to secrets.yaml:
 # ihm_modbus_host_ip: 10.40.0.31
@@ -531,17 +531,43 @@ modbus:
         state_class: measurement
         scan_interval: *scan_interval_medium
 
-      - name: iHM feed-in power limit ratio
-        unique_id: ihm_feed_in_power_limit_ratio
+      # Unknown on off register undocumented. 
+      - name: iHM feed-in power limit mode raw
+        unique_id: iHM feed_in_power_limit_mode_raw
         slave: !secret ihm_modbus_device_address
-        address: 8030 # reg 8031
+        address: 8027 # reg 8028
         input_type: holding
-        data_type: int32
+        data_type: uint16
+        state_class: measurement
+        scan_interval: *scan_interval_medium
+
+      # Protocol documents lists register as 8031 but I found it at 8029
+      - name: iHM feed-in power limit
+        unique_id: ihm_feed_in_power_limit
+        slave: !secret ihm_modbus_device_address
+        address: &ihm_reg_feed_in_power_limit 8028 # reg 8029
+        input_type: holding
+        data_type: uint32
         swap: word
         precision: 1
         scale: 0.1
-        unit_of_measurement: "%"
+        unit_of_measurement: "kW"
         state_class: measurement
+        scan_interval: *scan_interval_fast
+
+      # unused? use reg 8029 above?
+      - name: "iHM Feedin Power Limit Ratio"
+        unique_id: ihm_feedin_power_limit_ratio
+        address: 8030  # reg 8031
+        slave: !secret ihm_modbus_device_address
+        input_type: holding
+        data_type: int32
+        swap: word
+        scale: 0.1
+        precision: 1
+        min_value: 0
+        max_value: 1000
+        unit_of_measurement: "%"
         scan_interval: *scan_interval_medium
 
       - name: iHM external vpp heartbeat
@@ -974,3 +1000,31 @@ template:
           {% else %}
             mdi:transmission-tower
           {% endif %}
+          
+####################
+  # template: number
+  ####################
+  - number:
+  
+      # max hard coded for testing (5.1 for 5.1 kw). should pull from inverter?
+      - name: iHM Export power limit
+        unique_id: ihm_export_power_limit
+        unit_of_measurement: kW
+        min: 0
+        max: 5.1  # Adjust to your system max
+        step: 0.1
+        availability: "{{ states('sensor.ihm_feed_in_power_limit')|is_number}}"
+        # modbus --> UI
+        state: "{{ states('sensor.ihm_feed_in_power_limit') }}"
+        # UI --> modbus
+        set_value:
+          - action: modbus.write_register
+            data:
+              hub: *ihm_hub_name
+              slave: !secret ihm_modbus_device_address
+              address: *ihm_reg_feed_in_power_limit
+              value: "{{ (value * 10) | int }}"
+          # manually refresh modbus register
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.ihm_feed_in_power_limit
