@@ -1,5 +1,7 @@
 # Home Assistant Sungrow iHomeManager (iHM) Integration
-# Last Updated: 2025-01-07
+# Last Updated: 2025-01-13
+#
+# TO do. Add binary sensor templete for turning feedin limit on and off.
 #
 #
 # IMPORTANT: This configuration is designed to co-exist with the Sungrow inverter YAML.
@@ -507,7 +509,8 @@ modbus:
         data_type: uint16
         state_class: measurement
         scan_interval: *scan_interval_medium
-
+        
+      # 170 = Charge 187 = Discharge 204 = Stop
       - name: iHM charging discharging command raw
         unique_id: ihm_charging_discharging_command_raw
         slave: !secret ihm_modbus_device_address
@@ -531,7 +534,7 @@ modbus:
         state_class: measurement
         scan_interval: *scan_interval_medium
 
-      # Unknown on off register undocumented. 
+      # This controls the abilty to set reg 8029 
       - name: iHM feed-in power limit mode raw
         unique_id: iHM_feed_in_power_limit_mode_raw
         slave: !secret ihm_modbus_device_address
@@ -556,8 +559,8 @@ modbus:
         scan_interval: *scan_interval_fast
 
       # unused? use reg 8029 above?
-      - name: "iHM Feedin Power Limit Ratio"
-        unique_id: ihm_feedin_power_limit_ratio
+      - name: "iHM feed-in power limit percentage"
+        unique_id: ihm_feedin_power_limit_percentage
         address: 8030  # reg 8031
         slave: !secret ihm_modbus_device_address
         input_type: holding
@@ -644,6 +647,66 @@ modbus:
         unit_of_measurement: "%"
         state_class: measurement
         scan_interval: *scan_interval_medium
+        
+    #####################
+    # modbus switches
+    #####################
+    switches:
+      - name: iHM system power
+        unique_id: ihm_system_power_switch
+        slave: !secret ihm_modbus_device_address
+        address: 8046 # reg 8047
+        write_type: holding
+        command_on: 207 # 0xCF
+        command_off: 206 # 0xCE
+        verify:
+          input_type: holding
+          address: 8046
+          state_on: 207
+          state_off: 206
+          delay: 1
+
+      - name: Charger enable
+        unique_id: ihm_charger_enable_switch
+        slave: !secret ihm_modbus_device_address
+        address: 8048 # reg 8049
+        write_type: holding
+        command_on: 170 # 0xAA
+        command_off: 85 # 0x55
+        verify:
+          input_type: holding
+          address: 8048
+          state_on: 170
+          state_off: 85
+          delay: 1
+
+      - name: Charger grid power draw
+        unique_id: ihm_charger_grid_power_draw_switch
+        slave: !secret ihm_modbus_device_address
+        address: 8049 # reg 8050
+        write_type: holding
+        command_on: 170 # 0xAA
+        command_off: 85 # 0x55
+        verify:
+          input_type: holding
+          address: 8049
+          state_on: 170
+          state_off: 85
+          delay: 1
+
+      - name: Charger power limitation
+        unique_id: ihm_charger_power_limitation_switch
+        slave: !secret ihm_modbus_device_address
+        address: 8050 # reg 8051
+        write_type: holding
+        command_on: 170 # 0xAA (On)
+        command_off: 85 # 0x55 (Off)
+        verify:
+          input_type: holding
+          address: 8050
+          state_on: 170
+          state_off: 85
+          delay: 1
 
 template:
   ###########################
@@ -1005,8 +1068,31 @@ template:
   # template: number
   ####################
   - number:
-  
-      # max hard coded for testing (5.1 for 5.1 kw). should pull from inverter?
+
+      # Charging/Discharging Power Control
+      - name: iHM charging discharging power
+        unique_id: ihm_charging_discharging_power_control
+        unit_of_measurement: kW
+        min: 0
+        max: 10.6
+        step: 0.1
+        availability: "{{ states('sensor.ihm_charging_discharging_power') | is_number }}"
+        # modbus --> UI
+        state: "{{ states('sensor.ihm_charging_discharging_power') }}"
+        # UI --> modbus
+        set_value:
+          - action: modbus.write_register
+            data_template:
+              hub: *ihm_hub_name
+              slave: !secret ihm_modbus_device_address
+              address: 8025 # reg 8026
+              value: "{{ (value | float * 10) | int }}"
+          # manually refresh modbus register
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.ihm_charging_discharging_power
+
+      # max hard coded for testing (5.1 for 5.1 kw). Should pull from inverter?
       # to write 32 bit integer you need to specify the low word and the high word in an array value: ["{{ (value * 10) | int }}", 0]
       - name: iHM Export power limit
         unique_id: ihm_export_power_limit
@@ -1029,3 +1115,159 @@ template:
           - action: homeassistant.update_entity
             target:
               entity_id: sensor.ihm_feed_in_power_limit
+
+      # Feed-in Power Limit Percentage
+      - name: iHM feed-in power limit percentage
+        unique_id: ihm_feedin_power_limit_percentage_control
+        unit_of_measurement: "%"
+        min: 0
+        max: 100
+        step: 0.1
+        availability: "{{ states('sensor.ihm_feed_in_power_limit_percentage') | is_number }}"
+        # modbus --> UI
+        state: "{{ states('sensor.ihm_feed_in_power_limit_percentage') }}"
+        # UI --> modbus
+        set_value:
+          - action: modbus.write_register
+            data_template:
+              hub: *ihm_hub_name
+              slave: !secret ihm_modbus_device_address
+              address: 8030 # reg 8031
+              value: "{{ (value | float * 10) | int }}"
+          # manually refresh modbus register
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.ihm_feed_in_power_limit_percentage
+
+      # Charger Power Limit Percentage
+      - name: Charger power limit percentage
+        unique_id: ihm_charger_power_limit_percentage_control
+        unit_of_measurement: "%"
+        min: 0
+        max: 100
+        step: 0.1
+        availability: "{{ states('sensor.charger_power_limit_percentage') | is_number }}"
+        # modbus --> UI
+        state: "{{ states('sensor.charger_power_limit_percentage') }}"
+        # UI --> modbus
+        set_value:
+          - action: modbus.write_register
+            data_template:
+              hub: *ihm_hub_name
+              slave: !secret ihm_modbus_device_address
+              address: 8051 # reg 8052
+              value: "{{ (value | float * 10) | int }}"
+          # manually refresh modbus register
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.charger_power_limit_percentage
+
+  ###################
+  # template: select
+  ###################
+  - select:
+      # EMS Mode Selection
+      - name: iHM EMS mode
+        unique_id: ihm_ems_mode
+        variables:
+          # map: option name to raw value
+          map:
+            "Self-consumption (default)": 1
+            "Time plan": 2
+            "AI Mode": 0
+            "VPP": 4
+            "Forced mode": 5
+          fallback: "Self-consumption (default)"
+        options: "{{ map.keys() | list | tojson }}" # get option names from map keys
+        availability: "{{ states('sensor.ihm_energy_management_mode_raw') | is_number }}"
+        # modbus --> UI (raw value --> option)
+        state: >-
+          {# workaround for limited jinja python skills to reverse-search the map #}
+          {# create a mutable namespace with default fallback #}
+          {% set ns = namespace(result=fallback) %}
+          {% set regVal = states('sensor.ihm_energy_management_mode_raw') | int %}
+          {# search in map inverted #}
+          {% for key, value in map.items() %}
+            {% if value == regVal %}
+              {% set ns.result = key %}
+            {% endif %}
+          {% endfor %}
+          {# save as result and output variable#}
+          {% set result = ns.result %}
+          {{ result }}
+        # UI --> modbus
+        select_option:
+          - action: modbus.write_register
+            data_template:
+              hub: *ihm_hub_name
+              slave: !secret ihm_modbus_device_address
+              address: 8023 # reg 8024
+              value: "{{ map.get(option, map.get('Self-consumption (default)', 1)) | int }}"
+
+      # Battery Forced Charge/Discharge Command
+      - name: iHM battery forced charge discharge
+        unique_id: ihm_battery_forced_charge_discharge
+        variables:
+          # map: option name to raw value
+          map:
+            "Stop (default)": 0xCC  # 204
+            "Forced charge": 0xAA   # 170
+            "Forced discharge": 0xBB # 187
+          fallback: "Stop (default)"
+        options: "{{ map.keys() | list | tojson }}" # get option names from map keys
+        availability: "{{ states('sensor.ihm_charging_discharging_command_raw') | is_number }}"
+        # modbus --> UI (raw value --> option)
+        state: >-
+          {# workaround for limited jinja python skills to reverse-search the map #}
+          {# create a mutable namespace with default fallback #}
+          {% set ns = namespace(result=fallback) %}
+          {% set regVal = states('sensor.ihm_charging_discharging_command_raw') | int %}
+          {# search in map inverted #}
+          {% for key, value in map.items() %}
+            {% if value == regVal %}
+              {% set ns.result = key %}
+            {% endif %}
+          {% endfor %}
+          {# save as result and output variable#}
+          {% set result = ns.result %}
+          {{ result }}
+        # UI --> modbus
+        select_option:
+          - action: modbus.write_register
+            data_template:
+              hub: *ihm_hub_name
+              slave: !secret ihm_modbus_device_address
+              address: 8024 # reg 8025
+              value: "{{ map.get(option, map.get('Stop (default)', 0xCC)) | int }}"
+
+      # Charger Mode Selection
+      - name: Charger mode
+        unique_id: ihm_charger_mode_select
+        variables:
+          # map: option name to raw value
+          map:
+            "Fast charging": 164
+            "Eco & fast charging": 165
+            "Eco & economic charging": 166
+          fallback: "Fast charging"
+        options: "{{ map.keys() | list | tojson }}"
+        availability: "{{ states('sensor.charger_mode_raw') | is_number }}"
+        # modbus --> UI (raw value --> option)
+        state: >-
+          {% set ns = namespace(result=fallback) %}
+          {% set regVal = states('sensor.charger_mode_raw') | int %}
+          {% for key, value in map.items() %}
+            {% if value == regVal %}
+              {% set ns.result = key %}
+            {% endif %}
+          {% endfor %}
+          {% set result = ns.result %}
+          {{ result }}
+        # UI --> modbus
+        select_option:
+          - action: modbus.write_register
+            data_template:
+              hub: *ihm_hub_name
+              slave: !secret ihm_modbus_device_address
+              address: 8047 # reg 8048
+              value: "{{ map.get(option, map.get('Fast charging', 164)) | int }}"
