@@ -1,11 +1,19 @@
 # sungrow_ihomemanager
-Sungrow YAML to communicate with iHomeManager using Modbus.
+Sungrow YAML for Home Assistant to communicate with iHomeManager using Modbus.
 This was created to access grid import/export entities which are not available in the inverter Modbus when an iHomeManager is added to a Sungrow system.
 The second purpose is to access EV charger entities which is commonly why an iHomeManager would be installed.
 
-This is very BETA currently.
+This is currently BETA and in development/testing.
+Current Status
+Home Assistant entities are created for most regiters (some seem irelvant or are undocumented and have currently been left out)
+Abilty to set holding registers added
+e.g set
+EMS mode
+Battery forced charge/discharge mode and rate
+EV charger mode
+
+There is no dashbaord template created (yet)
 Additional registers will be added as time permits. Feel free to contribute.
-Ability to set holding registers is WIP.
 
 EV charger used for testing AC22E-01
 
