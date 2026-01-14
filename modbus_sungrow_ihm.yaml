@@ -1,8 +1,7 @@
 # Home Assistant Sungrow iHomeManager (iHM) Integration
 # Last Updated: 2025-01-13
 #
-# TO do. Add binary sensor templete for turning feedin limit on and off.
-#
+
 #
 # IMPORTANT: This configuration is designed to co-exist with the Sungrow inverter YAML.
 # - unique_ids are prefixed with "ihm_" to prevent registry conflicts
@@ -18,8 +17,9 @@ modbus:
     type: tcp
     host: !secret ihm_modbus_host_ip
     port: !secret ihm_modbus_port
-    delay: 5
-    timeout: 10
+    delay: 15 # delay 5 second after connecting
+    timeout: 30 # timeout while waiting for a response before flooding the log with errors
+    message_wait_milliseconds: !secret ihm_modbus_wait_milliseconds # delay between messages, depending on iHomeManager connection
 
     sensors:
       #####################
@@ -587,6 +587,7 @@ modbus:
       # System Control
       #############
 
+      # This switch needs to be on (well not off) for the system to produce power / operate. Out of the Box on mine it was neither off or on. Use "iHM system power" to control.
       - name: iHM power on off raw
         unique_id: ihm_power_on_off_raw
         slave: !secret ihm_modbus_device_address
@@ -652,6 +653,8 @@ modbus:
     # modbus switches
     #####################
     switches:
+    
+      # This switch needs to be on (well not off) for the system to produce power / operate. Out of the Box on mine it was neither off or on.
       - name: iHM system power
         unique_id: ihm_system_power_switch
         slave: !secret ihm_modbus_device_address
@@ -666,6 +669,7 @@ modbus:
           state_off: 206
           delay: 1
 
+      # This switch will start /stop the ev charger
       - name: Charger enable
         unique_id: ihm_charger_enable_switch
         slave: !secret ihm_modbus_device_address
@@ -680,6 +684,7 @@ modbus:
           state_off: 85
           delay: 1
 
+      # Only seems to toggle allow energy purchse for eco & econominc charging. not eco and fast mode
       - name: Charger grid power draw
         unique_id: ihm_charger_grid_power_draw_switch
         slave: !secret ihm_modbus_device_address
