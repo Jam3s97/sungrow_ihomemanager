@@ -1,5 +1,5 @@
 # Home Assistant Sungrow iHomeManager (iHM) Integration
-# Last Updated: 2025-01-13
+# Last Updated: 2025-01-18
 #
 
 #
@@ -217,7 +217,7 @@ modbus:
         state_class: measurement
         scan_interval: &scan_interval_realtime 5
 
-      # NOTE: positive when charging, negative when discharging
+      # NOTE: negative when charging, positive when discharging
       - name: iHM battery power raw
         unique_id: ihm_battery_power_raw
         slave: !secret ihm_modbus_device_address
@@ -768,7 +768,7 @@ template:
         availability: >-
           {{ states('sensor.ihm_battery_power_raw') not in ['unknown','unavailable'] }}
         state: >-
-          {{ states('sensor.ihm_battery_power_raw')|int }}
+          {{ states('sensor.ihm_battery_power_raw')|int * -1 }}
 
       # positive if charging, else zero
       - name: iHM battery charging power
@@ -795,7 +795,7 @@ template:
         availability: >-
           {{ states('sensor.ihm_battery_power_raw') not in ['unknown','unavailable'] }}
         state: >-
-          {{ states('sensor.ihm_battery_power_raw')|int * -1 }}
+          {{ states('sensor.ihm_battery_power_raw')|int }}
 
       # positive if discharging, else zero
       - name: iHM battery discharging power
@@ -1033,9 +1033,9 @@ template:
         availability: >-
           {{ states('sensor.ihm_battery_power_raw') not in ['unknown','unavailable'] }}
         state: >-
-          {{ states('sensor.ihm_battery_power_raw')|float(0) > 50 }}
+          {{ states('sensor.ihm_battery_power_raw')|float(0) < -50 }}
         icon: >-
-          {% if states('sensor.ihm_battery_power_raw')|float(0) > 50 %}
+          {% if states('sensor.ihm_battery_power_raw')|float(0) < -50 %}
             mdi:battery-charging
           {% else %}
             mdi:battery
