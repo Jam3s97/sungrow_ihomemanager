@@ -654,8 +654,10 @@ modbus:
     # modbus switches
     #####################
     switches:
-    
-      # This switch needs to be on (well not off) for the system to produce power / operate. Out of the Box on mine it was neither off or on.
+
+      # This switch needs to be on (well not off) for the system to produce power / operate.
+      # Note: Device often returns 0 (not set) but system still operates.
+      # Verification disabled because device doesn't maintain written values reliably.   
       - name: iHM system power
         unique_id: ihm_system_power_switch
         slave: !secret ihm_modbus_device_address
@@ -663,12 +665,6 @@ modbus:
         write_type: holding
         command_on: 207 # 0xCF
         command_off: 206 # 0xCE
-        verify:
-          input_type: holding
-          address: 8046
-          state_on: 207
-          state_off: 206
-          delay: 1
 
       # This switch will start /stop the ev charger
       - name: Charger enable
@@ -685,7 +681,7 @@ modbus:
           state_off: 85
           delay: 1
 
-      # Only seems to toggle allow energy purchse for eco & econominc charging. not eco and fast mode
+      # Only seems to toggle allow energy purchase for eco & econominc charging. not eco and fast mode
       - name: Charger grid power draw
         unique_id: ihm_charger_grid_power_draw_switch
         slave: !secret ihm_modbus_device_address
@@ -700,6 +696,7 @@ modbus:
           state_off: 85
           delay: 1
 
+      # Verification disabled because device doesn't maintain written values reliably.
       - name: Charger power limitation
         unique_id: ihm_charger_power_limitation_switch
         slave: !secret ihm_modbus_device_address
@@ -707,12 +704,6 @@ modbus:
         write_type: holding
         command_on: 170 # 0xAA (On)
         command_off: 85 # 0x55 (Off)
-        verify:
-          input_type: holding
-          address: 8050
-          state_on: 170
-          state_off: 85
-          delay: 1
 
 template:
   ###########################
