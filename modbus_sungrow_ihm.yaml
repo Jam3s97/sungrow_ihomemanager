@@ -808,8 +808,6 @@ template:
       # Friendly Status Text
       #############
 
-        # status 4 was seen shortly after connecting charger. may need to check iSolarCloud logs to determine what it is.
-        # add icon for status 4 once determined
       - name: Charger status
         unique_id: ihm_charger_status
         device_class: enum
@@ -824,9 +822,9 @@ template:
           {% elif status == 3 %}
             Charging
           {% elif status == 4 %}
-            Unknown
+            Charging is suspended (Charge side)
           {% elif status == 5 %}
-            Charging suspended
+            Charging suspended (EV side)
           {% elif status == 6 %}
             Charging completed
           {% else %}
@@ -840,6 +838,8 @@ template:
             mdi:battery-charging-outline
           {% elif status == 3 %}
             mdi:battery-charging
+          {% elif status == 4 %}
+            mdi:battery-charging-outline
           {% elif status == 5 %}
             mdi:battery-charging-outline
           {% elif status == 6 %}
@@ -1268,3 +1268,4 @@ template:
               slave: !secret ihm_modbus_device_address
               address: 8047 # reg 8048
               value: "{{ map.get(option, map.get('Fast charging', 164)) | int }}"
+
