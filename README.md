@@ -5,14 +5,14 @@ The second purpose is to access EV charger entities which is commonly why an iHo
 
 This is currently BETA and in development/testing.
 Current Status
-Home Assistant entities are created for most regiters (some seem irelvant or are undocumented and have currently been left out)
+Home Assistant entities are created for most registers (some seem irrelevant or are undocumented and have currently been left out)
 Abilty to set holding registers added
 e.g set
 EMS mode
 Battery forced charge/discharge mode and rate
 EV charger mode
 
-There is no dashbaord template created (yet)
+There is no dashboard template created (yet)
 Additional registers will be added as time permits. Feel free to contribute.
 
 EV charger used for testing AC22E-01
