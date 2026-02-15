@@ -44,6 +44,7 @@ When you add a Sungrow iHomeManager to your system, critical grid import/export 
 
 ### Known Limitations
 - ⚠️ Some iSolarCloud functions lack Modbus documentation (e.g., Self Consumption thresholds for power purchase and feed-in)
+- ⚠️ Many registers available on the inverter have not been added to the iHomeManager. Until Sungrow adds support you will have to query the inverter for those. 
 - ⚠️ No pre-built dashboard template (yet)
 - ⚠️ Scenes/automations not included
 
