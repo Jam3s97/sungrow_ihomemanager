@@ -9,14 +9,10 @@ Modbus integration for Sungrow iHomeManager in Home Assistant, providing access 
 - [Current Status](#current-status)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
-- [Configuration](#configuration)
-- [Available Entities](#available-entities)
-- [Usage Examples](#usage-examples)
 - [Troubleshooting](#troubleshooting)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [Credits](#credits)
-- [License](#license)
 
 ## Why This Integration?
 
