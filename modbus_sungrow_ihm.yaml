@@ -15,7 +15,7 @@ modbus:
     host: !secret ihm_modbus_host_ip
     port: !secret ihm_modbus_port
     delay: 15 # delay 5 second after connecting
-    timeout: 30 # timeout while waiting for a response before flooding the log with errors
+    timeout: 10 # timeout while waiting for a response before flooding the log with errors # adjusted down form 30 due to slow register updates
     message_wait_milliseconds: !secret ihm_modbus_wait_milliseconds # delay between messages, depending on iHomeManager connection
 
     sensors:
@@ -712,8 +712,8 @@ modbus:
           delay: 1
 
       # Verification disabled because device doesn't maintain written values reliably.
-      - name: Charger power limitation
-        unique_id: ihm_charger_power_limitation_switch
+      - name: Active power limitation
+        unique_id: ihm_active_power_limitation_switch
         slave: !secret ihm_modbus_device_address
         address: 8050 # reg 8051
         write_type: holding
@@ -1180,9 +1180,9 @@ template:
             target:
               entity_id: sensor.ihm_feed_in_power_limit_percentage
 
-      # Charger Power Limit Percentage
-      - name: Charger power limit percentage
-        unique_id: ihm_charger_power_limit_percentage_control
+      # Active Power Limit Percentage
+      - name: Active power limit percentage
+        unique_id: ihm_active_power_limit_percentage_control
         unit_of_measurement: "%"
         min: 0
         max: 100
@@ -1312,4 +1312,3 @@ template:
               slave: !secret ihm_modbus_device_address
               address: 8047 # reg 8048
               value: "{{ map.get(option, map.get('Fast charging', 164)) | int }}"
-
