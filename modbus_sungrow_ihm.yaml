@@ -15,7 +15,7 @@ modbus:
     host: !secret ihm_modbus_host_ip
     port: !secret ihm_modbus_port
     delay: 15 # delay 5 second after connecting
-    timeout: 30 # timeout while waiting for a response before flooding the log with errors
+    timeout: 10 # timeout while waiting for a response before flooding the log with errors # adjusted down form 30 due to slow register updates
     message_wait_milliseconds: !secret ihm_modbus_wait_milliseconds # delay between messages, depending on iHomeManager connection
 
     sensors:
@@ -547,7 +547,7 @@ modbus:
         state_class: measurement
         scan_interval: *scan_interval_medium
 
-      # This controls the abilty to set reg 8029 
+      # This controls the abilty to set reg 8029. Setting off mean there is no feed-in limit and will export up to the inverters ac capacity 
       - name: iHM feed-in power limit mode raw
         unique_id: iHM_feed_in_power_limit_mode_raw
         slave: !secret ihm_modbus_device_address
@@ -557,7 +557,7 @@ modbus:
         state_class: measurement
         scan_interval: *scan_interval_medium
 
-      # Protocol documents lists register as 8031 but I found it at 8029
+      # Protocol documents lists register as 8031 and % but I found 8029 to be kw limit control.
       - name: iHM feed-in power limit
         unique_id: ihm_feed_in_power_limit
         slave: !secret ihm_modbus_device_address
@@ -570,7 +570,7 @@ modbus:
         unit_of_measurement: "kW"
         state_class: measurement
         scan_interval: *scan_interval_fast
-
+        
       # unused? use reg 8029 above?
       # CHANGED in V1.0.2 protocol document: Data type changed from S32 to S16
       - name: "iHM feed-in power limit percentage"
@@ -593,6 +593,29 @@ modbus:
         input_type: holding
         data_type: uint16
         unit_of_measurement: s
+        state_class: measurement
+        scan_interval: *scan_interval_medium
+        
+      # on/off to limit active power (Inverters AC port not feed-in power)
+      - name: iHM active power limitation enable raw
+        unique_id: ihm_active_power_limitation_enable_raw
+        slave: !secret ihm_modbus_device_address
+        address: 8050 # reg 8051
+        input_type: holding
+        data_type: uint16
+        state_class: measurement
+        scan_interval: *scan_interval_medium
+
+      # Limit active power % (Inverters AC port not feed-in power)
+      - name: iHM active power limit percentage
+        unique_id: ihm_active_power_limit_percentage
+        slave: !secret ihm_modbus_device_address
+        address: 8051 # reg 8052
+        input_type: holding
+        data_type: uint16
+        precision: 1
+        scale: 0.1
+        unit_of_measurement: "%"
         state_class: measurement
         scan_interval: *scan_interval_medium
 
@@ -641,27 +664,7 @@ modbus:
         state_class: measurement
         scan_interval: *scan_interval_medium
 
-      - name: Charger power limitation enable raw
-        unique_id: ihm_charger_power_limitation_enable_raw
-        slave: !secret ihm_modbus_device_address
-        address: 8050 # reg 8051
-        input_type: holding
-        data_type: uint16
-        state_class: measurement
-        scan_interval: *scan_interval_medium
 
-      - name: Charger power limit percentage
-        unique_id: ihm_charger_power_limit_percentage
-        slave: !secret ihm_modbus_device_address
-        address: 8051 # reg 8052
-        input_type: holding
-        data_type: uint16
-        precision: 1
-        scale: 0.1
-        unit_of_measurement: "%"
-        state_class: measurement
-        scan_interval: *scan_interval_medium
-        
     #####################
     # modbus switches
     #####################
@@ -1105,6 +1108,7 @@ template:
   - number:
 
       # Charging/Discharging Power Control
+      # Max come from secrets.yaml
       # to write 32 bit integer you need to specify the low word and the high word in an array value: ["{{ (value * 10) | int }}", 0]
       - name: iHM charging discharging power
         unique_id: ihm_charging_discharging_power_control
@@ -1129,6 +1133,7 @@ template:
               entity_id: sensor.ihm_charging_discharging_power
 
       # Feed in (export) limit for controlling export to grid.
+      # Max come from secrets.yaml
       # to write 32 bit integer you need to specify the low word and the high word in an array value: ["{{ (value * 10) | int }}", 0]
       - name: iHM Export power limit
         unique_id: ihm_export_power_limit
