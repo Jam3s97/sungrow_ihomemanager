@@ -15,7 +15,7 @@ modbus:
     host: !secret ihm_modbus_host_ip
     port: !secret ihm_modbus_port
     delay: 15 # delay 5 second after connecting
-    timeout: 10 # timeout while waiting for a response before flooding the log with errors # adjusted down form 30 due to slow register updates
+    timeout: 30 # timeout while waiting for a response before flooding the log with errors
     message_wait_milliseconds: !secret ihm_modbus_wait_milliseconds # delay between messages, depending on iHomeManager connection
 
     sensors:
@@ -1312,3 +1312,4 @@ template:
               slave: !secret ihm_modbus_device_address
               address: 8047 # reg 8048
               value: "{{ map.get(option, map.get('Fast charging', 164)) | int }}"
+
