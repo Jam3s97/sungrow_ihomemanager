@@ -940,7 +940,7 @@ template:
           {% endif %}
 
       # Different regional specs have different charging modes.
-      # Austraila has modes 164,165,166
+      # Australia has modes 164,165,166.167
       # Germany has modes 161,162,163,164
       - name: Charger mode
         unique_id: ihm_charger_mode
@@ -961,6 +961,8 @@ template:
             Eco & fast charging
           {% elif mode == 166 %}
             Eco & economic charging
+          {% elif mode == 167 %}
+            Time plan charging
           {% else %}
             Unknown ({{ mode }})
           {% endif %}
@@ -977,6 +979,8 @@ template:
           {% elif mode == 165 %}
             mdi:lightning-bolt
           {% elif mode == 166 %}
+            mdi:car-clock
+          {% elif mode == 167 %}
             mdi:leaf
           {% else %}
             mdi:help-circle
@@ -1306,6 +1310,7 @@ template:
             "Fast charging": 164
             "Eco & fast charging": 165
             "Eco & economic charging": 166
+            "Time plan charging": 167
           fallback: "Fast charging"
         options: "{{ map.keys() | list | tojson }}"
         availability: "{{ states('sensor.charger_mode_raw') | is_number }}"
@@ -1362,3 +1367,4 @@ template:
               slave: !secret ihm_modbus_device_address
               address: 8047 # reg 8048
               value: "{{ map.get(option, map.get('Fast charging', 164)) | int }}"
+
