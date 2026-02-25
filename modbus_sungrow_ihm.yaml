@@ -939,6 +939,9 @@ template:
             mdi:help-circle
           {% endif %}
 
+      # Different regional specs have different charging modes.
+      # Austraila has modes 164,165,166
+      # Germany has modes 161,162,163,164
       - name: Charger mode
         unique_id: ihm_charger_mode
         device_class: enum
@@ -946,7 +949,13 @@ template:
           {{ states('sensor.charger_mode_raw') not in ['unknown','unavailable'] }}
         state: >-
           {% set mode = states('sensor.charger_mode_raw')|int %}
-          {% if mode == 164 %}
+          {% if mode == 161 %}
+            ECO mode charging
+          {% elif mode == 162 %}
+            Scheduled charging
+          {% elif mode == 163 %}
+            Customized charging
+          {% elif mode == 164 %}
             Fast charging
           {% elif mode == 165 %}
             Eco & fast charging
@@ -957,7 +966,13 @@ template:
           {% endif %}
         icon: >-
           {% set mode = states('sensor.charger_mode_raw')|int %}
-          {% if mode == 164 %}
+          {% if mode == 161 %}
+            mdi:leaf
+           {% elif mode == 162 %}
+            mdi:car-clock
+          {% elif mode == 163 %}
+            mdi:lightning-bolt
+          {% elif mode == 164 %}
             mdi:lightning-bolt
           {% elif mode == 165 %}
             mdi:lightning-bolt
@@ -1282,6 +1297,7 @@ template:
               value: "{{ map.get(option, map.get('Stop (default)', 0xCC)) | int }}"
 
       # Charger Mode Selection
+      # Based of Australian spec charger
       - name: Charger mode
         unique_id: ihm_charger_mode_select
         variables:
@@ -1313,3 +1329,36 @@ template:
               address: 8047 # reg 8048
               value: "{{ map.get(option, map.get('Fast charging', 164)) | int }}"
 
+      # Charger Mode Selection
+      # Based of German spec charger
+      - name: Charger mode europe
+        unique_id: ihm_charger_mode_europe_select
+        variables:
+          # map: option name to raw value
+          map:
+            "ECO mode charging": 161
+            "Scheduled charging": 162
+            "Customized charging": 163
+            "Fast charging": 164
+          fallback: "Fast charging"
+        options: "{{ map.keys() | list | tojson }}"
+        availability: "{{ states('sensor.charger_mode_raw') | is_number }}"
+        # modbus --> UI (raw value --> option)
+        state: >-
+          {% set ns = namespace(result=fallback) %}
+          {% set regVal = states('sensor.charger_mode_raw') | int %}
+          {% for key, value in map.items() %}
+            {% if value == regVal %}
+              {% set ns.result = key %}
+            {% endif %}
+          {% endfor %}
+          {% set result = ns.result %}
+          {{ result }}
+        # UI --> modbus
+        select_option:
+          - action: modbus.write_register
+            data_template:
+              hub: *ihm_hub_name
+              slave: !secret ihm_modbus_device_address
+              address: 8047 # reg 8048
+              value: "{{ map.get(option, map.get('Fast charging', 164)) | int }}"
