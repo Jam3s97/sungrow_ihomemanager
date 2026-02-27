@@ -957,6 +957,8 @@ template:
             Customized charging
           {% elif mode == 164 %}
             Fast charging
+           {% elif mode == 160 %}
+            Fast charging
           {% elif mode == 165 %}
             Eco & fast charging
           {% elif mode == 166 %}
@@ -975,6 +977,8 @@ template:
           {% elif mode == 163 %}
             mdi:lightning-bolt
           {% elif mode == 164 %}
+            mdi:lightning-bolt
+          {% elif mode == 160 %}
             mdi:lightning-bolt
           {% elif mode == 165 %}
             mdi:lightning-bolt
@@ -1341,10 +1345,10 @@ template:
         variables:
           # map: option name to raw value
           map:
+            "Fast charging": 160
             "ECO mode charging": 161
             "Scheduled charging": 162
             "Customized charging": 163
-            "Fast charging": 164
           fallback: "Fast charging"
         options: "{{ map.keys() | list | tojson }}"
         availability: "{{ states('sensor.charger_mode_raw') | is_number }}"
@@ -1366,5 +1370,6 @@ template:
               hub: *ihm_hub_name
               slave: !secret ihm_modbus_device_address
               address: 8047 # reg 8048
-              value: "{{ map.get(option, map.get('Fast charging', 164)) | int }}"
+              value: "{{ map.get(option, map.get('Fast charging', 160)) | int }}"
+
 
