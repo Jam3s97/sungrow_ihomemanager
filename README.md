@@ -127,9 +127,6 @@ Restart Home Assistant to load the new configuration. Check for any errors in th
 ### EV Charger (if installed)
 - Charger Status
 - Charging Mode
-- Charging Current
-- Charging Power
-- Session Energy
 - Charger Enable/Disable
 
 ### Battery & EMS
