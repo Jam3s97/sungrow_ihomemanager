@@ -17,6 +17,7 @@ Modbus integration for Sungrow iHomeManager in Home Assistant, providing access 
 - [Current Status](#-current-status)
 - [Prerequisites](#-prerequisites)
 - [Installation](#-installation)
+- [Dashboard](#-dashboard)
 - [Troubleshooting](#-troubleshooting)
 - [Roadmap](#-roadmap)
 - [Contributing](#-contributing)
@@ -137,6 +138,27 @@ Restart Home Assistant to load the new configuration. Check for any errors in th
 
 *Full entity list available in the YAML configuration file*
 
+## Dashboard
+
+The file Dashboard.yaml in the git contains apredefined dashboard showing the most relevant iHomeManager sensors.
+
+### Setup
+
+Create a new dashboard, e.g. called "iHomeManager":
+Home Assistant --> Settings --> Dashboards --> "Add Dashboard" --> "New Dashboard from Scratch"
+Title: iHomeManager
+Click "Create"
+--> A new dashboard with the name "iHomeManager" is created
+
+Open the dashboard and paste the content of the provided dashboard file:
+Open the newly created dashboard "iHomeManager" (left side of HA)
+Click the pencil icon in the top right corner to "Edit Dashboard"
+Click the "three dots" menu and select "Raw configuration editor"
+Delete the pre-generated sample code
+Copy and paste the content of dashboard.yaml
+Ensure that spacing is preserved
+Press "Save", close the editor, and press "Done"
+
 
 ## 🔍 Troubleshooting
 
@@ -156,7 +178,7 @@ Restart Home Assistant to load the new configuration. Check for any errors in th
 
 ## 🗺️ Roadmap
 
-- [ ] Create pre-built dashboard template
+- [✅] Create pre-built dashboard template
 - [ ] Add example automations and scenes for common use cases
 
 ## 🤝 Contributing
