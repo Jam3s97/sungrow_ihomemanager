@@ -1,0 +1,386 @@
+title: iHomeManager
+views:
+  - title: Overview
+    icon: mdi:sun-compass
+    cards:
+      - type: glance
+        title: System Status
+        columns: 4
+        state_color: true
+        show_name: true
+        show_icon: true
+        show_state: true
+        entities:
+          - entity: sensor.ihm_energy_management_mode
+            name: EMS Mode
+          - entity: sensor.ihm_battery_command
+            name: Battery Cmd
+          - entity: sensor.ihm_battery_level
+            name: Battery SoC
+          - entity: switch.ihm_system_power
+            name: System Power
+      - type: gauge
+        title: Battery State of Charge
+        entity: sensor.ihm_battery_level
+        min: 0
+        max: 100
+        unit: '%'
+        severity:
+          green: 60
+          yellow: 30
+          red: 10
+      - type: entities
+        title: Real-Time Power
+        state_color: true
+        entities:
+          - entity: sensor.ihm_total_active_power
+            name: Total Inverter Active Power
+            icon: mdi:solar-power
+          - entity: sensor.ihm_meter_power_raw
+            name: Grid Power (+ import / âˆ’ export)
+            icon: mdi:transmission-tower
+          - entity: sensor.ihm_grid_import_power
+            name: Grid Import Power
+            icon: mdi:transmission-tower-import
+          - entity: sensor.ihm_grid_export_power
+            name: Grid Export Power
+            icon: mdi:transmission-tower-export
+          - entity: sensor.ihm_load_power
+            name: Load Power
+            icon: mdi:home-lightning-bolt
+          - entity: sensor.ihm_battery_power_raw
+            name: Battery Power (âˆ’ charge / + discharge)
+            icon: mdi:battery-charging
+          - entity: sensor.ihm_battery_charging_power
+            name: Battery Charging Power
+            icon: mdi:battery-plus
+          - entity: sensor.ihm_battery_discharging_power
+            name: Battery Discharging Power
+            icon: mdi:battery-minus
+      - type: entities
+        title: Energy Totals (Lifetime)
+        entities:
+          - entity: sensor.ihm_grid_import_energy
+            name: Total Grid Import
+            icon: mdi:transmission-tower-import
+          - entity: sensor.ihm_grid_export_energy
+            name: Total Grid Export
+            icon: mdi:transmission-tower-export
+      - type: statistics-graph
+        title: Power Distribution â€” Last 24 Hours
+        chart_type: line
+        period: 5minute
+        days_to_show: 1
+        stat_types:
+          - mean
+        entities:
+          - entity: sensor.ihm_grid_import_power
+            name: Grid Import
+          - entity: sensor.ihm_grid_export_power
+            name: Grid Export
+          - entity: sensor.ihm_load_power
+            name: Load
+          - entity: sensor.ihm_battery_charging_power
+            name: Battery Charge
+          - entity: sensor.ihm_battery_discharging_power
+            name: Battery Discharge
+      - type: statistics-graph
+        title: Battery SoC â€” Last 7 Days
+        chart_type: line
+        period: hour
+        days_to_show: 7
+        stat_types:
+          - mean
+          - min
+          - max
+        entities:
+          - entity: sensor.ihm_battery_level
+            name: Battery SoC
+  - title: Grid & Meter
+    icon: mdi:transmission-tower
+    cards:
+      - type: entities
+        title: Grid Summary
+        entities:
+          - entity: sensor.ihm_meter_power_raw
+            name: Meter Power (+ import / âˆ’ export)
+          - entity: sensor.ihm_grid_import_power
+            name: Import Power
+          - entity: sensor.ihm_grid_export_power
+            name: Export Power
+          - entity: sensor.ihm_grid_frequency
+            name: Grid Frequency
+          - entity: sensor.ihm_output_type
+            name: Output Type
+      - type: entities
+        title: Phase Voltages â€” Channel 1
+        entities:
+          - entity: sensor.ihm_phase_a_voltage
+            name: Phase A Voltage
+            icon: mdi:alpha-a-circle
+          - entity: sensor.ihm_phase_b_voltage
+            name: Phase B Voltage
+            icon: mdi:alpha-b-circle
+          - entity: sensor.ihm_phase_c_voltage
+            name: Phase C Voltage
+            icon: mdi:alpha-c-circle
+      - type: entities
+        title: Phase Active Power â€” Channel 1
+        entities:
+          - entity: sensor.ihm_phase_a_active_power
+            name: Phase A Active Power
+            icon: mdi:alpha-a-circle
+          - entity: sensor.ihm_phase_b_active_power
+            name: Phase B Active Power
+            icon: mdi:alpha-b-circle
+          - entity: sensor.ihm_phase_c_active_power
+            name: Phase C Active Power
+            icon: mdi:alpha-c-circle
+      - type: entities
+        title: Channel 2 (Secondary Meter)
+        entities:
+          - entity: sensor.ihm_phase_a_voltage_ch2
+            name: Phase A Voltage
+          - entity: sensor.ihm_phase_b_voltage_ch2
+            name: Phase B Voltage
+          - entity: sensor.ihm_phase_c_voltage_ch2
+            name: Phase C Voltage
+          - entity: sensor.ihm_grid_frequency_ch2
+            name: Grid Frequency
+          - entity: sensor.ihm_phase_a_active_power_ch2
+            name: Phase A Active Power
+          - entity: sensor.ihm_phase_b_active_power_ch2
+            name: Phase B Active Power
+          - entity: sensor.ihm_phase_c_active_power_ch2
+            name: Phase C Active Power
+      - type: statistics-graph
+        title: Phase Voltages â€” Last 24 Hours
+        chart_type: line
+        period: 5minute
+        days_to_show: 1
+        stat_types:
+          - mean
+        entities:
+          - entity: sensor.ihm_phase_a_voltage
+            name: Phase A
+          - entity: sensor.ihm_phase_b_voltage
+            name: Phase B
+          - entity: sensor.ihm_phase_c_voltage
+            name: Phase C
+      - type: statistics-graph
+        title: Grid Import / Export â€” Last 7 Days
+        chart_type: line
+        period: hour
+        days_to_show: 7
+        stat_types:
+          - mean
+        entities:
+          - entity: sensor.ihm_grid_import_power
+            name: Import
+          - entity: sensor.ihm_grid_export_power
+            name: Export
+  - title: Battery
+    icon: mdi:battery-high
+    cards:
+      - type: gauge
+        title: Battery State of Charge
+        entity: sensor.ihm_battery_level
+        min: 0
+        max: 100
+        unit: '%'
+        severity:
+          green: 60
+          yellow: 30
+          red: 10
+      - type: entities
+        title: Battery Status
+        state_color: true
+        entities:
+          - entity: sensor.ihm_battery_level
+            name: State of Charge
+          - entity: sensor.ihm_battery_power_raw
+            name: Battery Power (âˆ’ charge / + discharge)
+          - entity: sensor.ihm_battery_charging_power
+            name: Charging Power
+          - entity: sensor.ihm_battery_discharging_power
+            name: Discharging Power
+          - entity: sensor.ihm_battery_command
+            name: Battery Command
+      - type: entities
+        title: Battery Limits
+        entities:
+          - entity: sensor.ihm_total_battery_rated_capacity
+            name: Rated Capacity
+          - entity: sensor.ihm_battery_charge_discharge_limit
+            name: Charge/Discharge Limit
+          - entity: sensor.ihm_battery_max_charge_power
+            name: Max Charge Power
+          - entity: sensor.ihm_battery_min_charge_power
+            name: Min Charge Power
+          - entity: sensor.ihm_battery_max_discharge_power
+            name: Max Discharge Power
+          - entity: sensor.ihm_battery_min_discharge_power
+            name: Min Discharge Power
+      - type: statistics-graph
+        title: Battery SoC â€” Last 30 Days
+        chart_type: line
+        period: hour
+        days_to_show: 30
+        stat_types:
+          - mean
+          - min
+          - max
+        entities:
+          - entity: sensor.ihm_battery_level
+            name: Battery SoC
+      - type: statistics-graph
+        title: Battery Charge/Discharge â€” Last 24 Hours
+        chart_type: line
+        period: 5minute
+        days_to_show: 1
+        stat_types:
+          - mean
+        entities:
+          - entity: sensor.ihm_battery_charging_power
+            name: Charging
+          - entity: sensor.ihm_battery_discharging_power
+            name: Discharging
+  - title: EMS Control
+    icon: mdi:solar-power
+    cards:
+      - type: entities
+        title: Current EMS State
+        state_color: true
+        entities:
+          - entity: sensor.ihm_energy_management_mode
+            name: Energy Management Mode
+          - entity: sensor.ihm_battery_command
+            name: Battery Command
+          - entity: sensor.ihm_charging_discharging_power
+            name: Charge/Discharge Power Setpoint
+      - type: entities
+        title: System Switches
+        state_color: true
+        entities:
+          - entity: switch.ihm_system_power
+            name: System Power On/Off
+          - entity: switch.active_power_limitation
+            name: Active Power Limitation
+      - type: entities
+        title: Feed-In Settings
+        entities:
+          - entity: sensor.ihm_feed_in_power_limit_mode_raw
+            name: Feed-In Limit Mode (raw)
+          - entity: sensor.ihm_feed_in_power_limit
+            name: Feed-In Power Limit (kW)
+          - entity: sensor.ihm_feed_in_power_limit_percentage
+            name: Feed-In Limit (%)
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: switch.active_power_limitation
+            state: 'off'
+        card:
+          type: entities
+          title: Active Power Limiting
+          entities:
+            - entity: switch.active_power_limitation
+              name: Enable Active Power Limit
+            - type: section
+              label: Active Power Limit (%) â€” enable switch to configure
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: switch.active_power_limitation
+            state: 'on'
+        card:
+          type: entities
+          title: Active Power Limiting
+          entities:
+            - entity: switch.active_power_limitation
+              name: Enable Active Power Limit
+            - entity: sensor.ihm_active_power_limit_percentage
+              name: Active Power Limit (%)
+      - type: entities
+        title: System Capacity
+        entities:
+          - entity: sensor.ihm_total_nominal_active_power
+            name: Total Nominal Active Power
+          - entity: sensor.ihm_total_battery_rated_capacity
+            name: Total Battery Rated Capacity
+          - entity: sensor.ihm_total_devices_connected
+            name: Devices Connected
+          - entity: sensor.ihm_devices_in_fault
+            name: Devices in Fault
+            icon: mdi:alert-circle
+  - title: EV Charger
+    icon: mdi:ev-station
+    cards:
+      - type: glance
+        title: Charger Status
+        columns: 3
+        state_color: true
+        entities:
+          - entity: sensor.charger_status
+            name: Status
+          - entity: sensor.charger_mode
+            name: Mode
+          - entity: switch.charger_enable
+            name: Enabled
+      - type: entities
+        title: Charger Controls
+        state_color: true
+        entities:
+          - entity: sensor.charger_status
+            name: Charger Status
+          - entity: sensor.charger_mode
+            name: Charger Mode
+          - entity: switch.charger_enable
+            name: Enable Charger
+          - entity: switch.charger_grid_power_draw
+            name: Allow Grid Power Draw
+      - type: entities
+        title: Raw Registers (Diagnostics)
+        entities:
+          - entity: sensor.charger_status_raw
+            name: Status Raw
+          - entity: sensor.charger_mode_raw
+            name: Mode Raw
+          - entity: sensor.charger_enable_raw
+            name: Enable Raw
+          - entity: sensor.charger_grid_power_draw_raw
+            name: Grid Power Draw Raw
+  - title: Device Info
+    icon: mdi:information-outline
+    cards:
+      - type: entities
+        title: iHomeManager Device Info
+        entities:
+          - entity: sensor.ihm_device_type_code
+            name: Device Type Code
+          - entity: sensor.ihm_protocol_number
+            name: Protocol Number
+          - entity: sensor.ihm_protocol_version
+            name: Protocol Version
+          - entity: sensor.ihm_application_software_version
+            name: Application Software Version
+          - entity: sensor.ihm_total_devices_connected
+            name: Total Devices Connected
+          - entity: sensor.ihm_devices_in_fault
+            name: Devices in Fault
+          - entity: sensor.ihm_output_type
+            name: Output Type (Phase Config)
+      - type: entities
+        title: All Power Sensors (Diagnostic)
+        entities:
+          - entity: sensor.ihm_total_active_power
+          - entity: sensor.ihm_meter_power_raw
+          - entity: sensor.ihm_load_power
+          - entity: sensor.ihm_battery_power_raw
+          - entity: sensor.ihm_grid_import_power
+          - entity: sensor.ihm_grid_export_power
+          - entity: sensor.ihm_battery_charging_power
+          - entity: sensor.ihm_battery_discharging_power
+          - entity: sensor.ihm_battery_level
+          - entity: sensor.ihm_grid_import_energy
+          - entity: sensor.ihm_grid_export_energy
