@@ -2,13 +2,17 @@
 
 Modbus integration for Sungrow iHomeManager in Home Assistant, providing access to grid metrics and EV charger controls that aren't available through standard inverter Modbus communication.
 
+> [!IMPORTANT]
+> **This project is superseded by [ha-modbus-manager](https://github.com/TCzerny/ha-modbus-manager).**
+>
+> The features from this integration have been included in Modbus Manager, which also has better support for polling both the inverter and the iHomeManager together. If you're starting fresh or looking to consolidate, please consider migrating to [TCzerny/ha-modbus-manager](https://github.com/TCzerny/ha-modbus-manager).
+>
+> This repository will remain available for reference but is no longer actively developed.
+
 > [!WARNING]
 > I can no longer develop this project as I have removed iHomeManager from my system.
 >
-> I am still supporting the current code (for now) and am seeking collaborators to take this on.
-> Please open a discussion if you want to contribute. It may be appropriate to fork this elsewhere.
->
-> It still needs a dashboard and scenes for selecting Forced Charge/Discharge etc.
+> I will still support the current code for now but any feature requests should be dirvetetto the Modbus Manager integration.
 
 ## 📋 Table of Contents
 
